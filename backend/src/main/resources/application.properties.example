@@ -1,0 +1,8 @@
+spring.datasource.url=jdbc:postgresql://localhost:5432/mdm_db
+spring.datasource.username=postgres
+spring.datasource.password=YOUR_PASSWORD_HERE
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+server.port=8080
+```
+This shows others how to configure without exposing your password!

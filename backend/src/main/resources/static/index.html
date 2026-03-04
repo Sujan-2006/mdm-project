@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDM Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #F0F4F8;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1A237E, #1565C0);
+            color: white;
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .header h1 { font-size: 22px; }
+        .header p  { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+        .header-right { text-align: right; font-size: 13px; opacity: 0.8; }
+
+        /* Main Container */
+        .container { padding: 24px 32px; }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #757575;
+        }
+        .stat-card.blue   .number { color: #1565C0; }
+        .stat-card.green  .number { color: #2E7D32; }
+        .stat-card.purple .number { color: #6A1B9A; }
+
+        /* Section Title */
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1A237E;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #E3F2FD;
+        }
+
+        /* Device Cards */
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .device-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #1565C0;
+        }
+        .device-card h3 {
+            font-size: 14px;
+            color: #1A237E;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+        .device-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 4px 0;
+            border-bottom: 1px solid #F5F5F5;
+        }
+        .device-info-row .key   { color: #757575; }
+        .device-info-row .value { font-weight: 500; }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .btn-blue   { background: #E3F2FD; color: #1565C0; }
+        .btn-purple { background: #F3E5F5; color: #6A1B9A; }
+        .btn:hover  { opacity: 0.8; }
+
+        /* Detail Panel */
+        .detail-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            display: none;
+        }
+        .detail-panel.active { display: block; }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .detail-item {
+            background: #F5F5F5;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .detail-item .key {
+            font-size: 11px;
+            color: #757575;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        .detail-item .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1A237E;
+            word-break: break-all;
+        }
+
+        /* Apps Table */
+        .apps-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .apps-table th {
+            background: #1A237E;
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .apps-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+        .apps-table tr:hover td { background: #F5F5F5; }
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .badge-system { background: #E8F5E9; color: #2E7D32; }
+        .badge-user   { background: #E3F2FD; color: #1565C0; }
+
+        /* Search */
+        .search-box {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid #BDBDBD;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .search-box:focus { border-color: #1565C0; }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #757575;
+            font-size: 16px;
+        }
+
+        /* Close button */
+        .close-btn {
+            float: right;
+            background: #FFEBEE;
+            color: #C62828;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* Status badge */
+        .status-enrolled {
+            background: #E8F5E9;
+            color: #2E7D32;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Refresh button */
+        .refresh-btn {
+            background: white;
+            color: #1565C0;
+            border: 1px solid #1565C0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .refresh-btn:hover { background: #E3F2FD; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div>
+        <h1>🛡️ MDM Admin Dashboard</h1>
+        <p>Android Enterprise Device Management System</p>
+    </div>
+    <div class="header-right">
+        <div id="currentTime"></div>
+        <button class="refresh-btn" onclick="loadDashboard()"
+                style="margin-top:8px">🔄 Refresh</button>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="number" id="totalDevices">...</div>
+            <div class="label">📱 Enrolled Devices</div>
+        </div>
+        <div class="stat-card green">
+            <div class="number" id="totalApps">...</div>
+            <div class="label">📦 Total Apps Tracked</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="number" id="totalEnrolled">...</div>
+            <div class="label">✅ Active Enrollments</div>
+        </div>
+    </div>
+
+    <!-- Device Detail Panel -->
+    <div class="detail-panel" id="detailPanel">
+        <button class="close-btn" onclick="closeDetail()">✕ Close</button>
+        <div class="section-title" id="detailTitle">Device Details</div>
+        <div class="detail-grid" id="detailGrid"></div>
+    </div>
+
+    <!-- Apps Panel -->
+    <div class="detail-panel" id="appsPanel">
+        <button class="close-btn" onclick="closeApps()">✕ Close</button>
+        <div class="section-title" id="appsTitle">App Inventory</div>
+        <input type="text" class="search-box"
+               placeholder="🔍 Search apps..."
+               oninput="filterApps(this.value)">
+        <div id="appsContent"></div>
+    </div>
+
+    <!-- Enrolled Devices -->
+    <div class="section-title">📱 Enrolled Devices</div>
+    <div id="devicesContainer">
+        <div class="loading">Loading devices...</div>
+    </div>
+
+</div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let allApps = [];
+
+    // Update clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent =
+            now.toLocaleString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Load dashboard data
+    async function loadDashboard() {
+        await loadStats();
+        await loadDevices();
+    }
+
+    // Load stats
+    async function loadStats() {
+        try {
+            const res  = await fetch(`${API}/api/stats`);
+            const data = await res.json();
+            document.getElementById('totalDevices').textContent =
+                data.totalDevices;
+            document.getElementById('totalApps').textContent =
+                data.totalApps;
+            document.getElementById('totalEnrolled').textContent =
+                data.totalDevices;
+        } catch (e) {
+            console.error('Stats error:', e);
+        }
+    }
+
+    // Load devices
+    async function loadDevices() {
+        try {
+            const res     = await fetch(`${API}/api/devices`);
+            const devices = await res.json();
+            const container = document.getElementById('devicesContainer');
+
+            if (devices.length === 0) {
+                container.innerHTML =
+                    '<div class="loading">No devices enrolled yet.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="devices-grid">
+                    ${devices.map(device => `
+                        <div class="device-card">
+                            <h3>📱 ${device.deviceId}</h3>
+                            <div class="device-info-row">
+                                <span class="key">Status</span>
+                                <span class="value">
+                                    <span class="status-enrolled">
+                                        ✅ Enrolled
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="device-info-row">
+                                <span class="key">Token</span>
+                                <span class="value">
+                                    ${device.enrollmentToken}
+                                </span>
+                            </div>
+                            <div class="device-info-row">
+                                <span class="key">Enrolled At</span>
+                                <span class="value">
+                                    ${new Date(device.enrolledAt)
+                .toLocaleString()}
+                                </span>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-blue"
+                                    onclick="viewDeviceInfo('${device.deviceId}')">
+                                    📋 Device Info
+                                </button>
+                                <button class="btn btn-purple"
+                                    onclick="viewApps('${device.deviceId}')">
+                                    📦 View Apps
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (e) {
+            document.getElementById('devicesContainer').innerHTML =
+                '<div class="loading">❌ Error loading devices. ' +
+                'Make sure backend is running!</div>';
+        }
+    }
+
+    // View device info
+    async function viewDeviceInfo(deviceId) {
+        try {
+            closeApps();
+            const res  = await fetch(`${API}/api/devices/${deviceId}/info`);
+            const info = await res.json();
+
+            document.getElementById('detailTitle').textContent =
+                `📋 Device Info — ${deviceId}`;
+            document.getElementById('detailGrid').innerHTML = `
+                <div class="detail-item">
+                    <div class="key">Device ID</div>
+                    <div class="value">${info.deviceId}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="key">Model</div>
+                    <div class="value">${info.model}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="key">Manufacturer</div>
+                    <div class="value">${info.manufacturer}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="key">Android Version</div>
+                    <div class="value">${info.osVersion}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="key">SDK Version</div>
+                    <div class="value">${info.sdkVersion}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="key">UUID</div>
+                    <div class="value">${info.uuid}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="key">Serial</div>
+                    <div class="value">${info.serial}</div>
+                </div>
+            `;
+            document.getElementById('detailPanel').classList.add('active');
+            document.getElementById('detailPanel')
+                .scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert('No device info found for this device!');
+        }
+    }
+
+    // View apps
+    async function viewApps(deviceId) {
+        try {
+            closeDetail();
+            document.getElementById('appsTitle').textContent =
+                `📦 App Inventory — ${deviceId}`;
+            document.getElementById('appsContent').innerHTML =
+                '<div class="loading">Loading apps...</div>';
+            document.getElementById('appsPanel').classList.add('active');
+
+            const res  = await fetch(
+                `${API}/api/devices/${deviceId}/apps`);
+            allApps    = await res.json();
+            renderApps(allApps);
+            document.getElementById('appsPanel')
+                .scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            document.getElementById('appsContent').innerHTML =
+                '<div class="loading">❌ Error loading apps!</div>';
+        }
+    }
+
+    // Render apps table
+    function renderApps(apps) {
+        const systemApps = apps.filter(a => a.systemApp).length;
+        const userApps   = apps.filter(a => !a.systemApp).length;
+
+        document.getElementById('appsContent').innerHTML = `
+            <div style="margin-bottom:12px; font-size:13px; color:#757575">
+                Total: <strong>${apps.length}</strong> |
+                System: <strong>${systemApps}</strong> |
+                User: <strong>${userApps}</strong>
+            </div>
+            <table class="apps-table">
+                <thead>
+                    <tr>
+                        <th>App Name</th>
+                        <th>Package Name</th>
+                        <th>Version</th>
+                        <th>Type</th>
+                        <th>Install Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${apps.map(app => `
+                        <tr>
+                            <td>${app.appName}</td>
+                            <td style="color:#757575">${app.packageName}</td>
+                            <td>${app.versionName}</td>
+                            <td>
+                                <span class="badge ${app.systemApp ?
+            'badge-system' : 'badge-user'}">
+                                    ${app.systemApp ? '⚙️ System' : '👤 User'}
+                                </span>
+                            </td>
+                            <td>${app.installSource}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Filter apps
+    function filterApps(query) {
+        const filtered = allApps.filter(app =>
+            app.appName.toLowerCase().includes(query.toLowerCase()) ||
+            app.packageName.toLowerCase().includes(query.toLowerCase())
+        );
+        renderApps(filtered);
+    }
+
+    // Close panels
+    function closeDetail() {
+        document.getElementById('detailPanel')
+            .classList.remove('active');
+    }
+    function closeApps() {
+        document.getElementById('appsPanel')
+            .classList.remove('active');
+    }
+
+    // Load on start
+    loadDashboard();
+</script>
+</body>
+</html>
