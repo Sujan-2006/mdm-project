@@ -4,8 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "java -jar target/*.jar",
-    "healthcheckPath": "/api/stats",
+    "startCommand": "java -jar target/backend-0.0.1-SNAPSHOT.jar",
     "restartPolicyType": "ON_FAILURE"
   }
 }
