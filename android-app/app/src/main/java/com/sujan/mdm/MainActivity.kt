@@ -79,6 +79,8 @@ class MainActivity : AppCompatActivity() {
         btnSyncApps.setOnClickListener {
             syncAppInventory()
         }
+        // Handle QR provisioning
+        handleProvisioningIntent()
 
         // Schedule background sync
         scheduleBackgroundSync()
@@ -237,5 +239,22 @@ class MainActivity : AppCompatActivity() {
                 androidx.work.ExistingPeriodicWorkPolicy.KEEP,
                 syncRequest
             )
+    }
+
+    private fun handleProvisioningIntent() {
+        if (intent.action ==
+            "android.app.action.PROVISIONING_SUCCESSFUL" ||
+            intent.action ==
+            "android.app.action.PROFILE_PROVISIONING_COMPLETE") {
+
+            val extras = intent.getBundleExtra(
+                "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE"
+            )
+            val token = extras?.getString("enrollment_token")
+                ?: "MDM_TOKEN_2024"
+
+            tvSyncStatus.text = "🔄 Auto enrolling from QR..."
+            enrollDevice(token)
+        }
     }
 }
