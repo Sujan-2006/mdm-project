@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         btnSyncApps.setOnClickListener {
             syncAppInventory()
         }
+
         // Handle QR provisioning
         handleProvisioningIntent()
 
@@ -99,7 +100,7 @@ class MainActivity : AppCompatActivity() {
     private fun enrollDevice(token: String) {
         lifecycleScope.launch {
             try {
-                tvStatus.text = "🔄 Status: Enrolling..."
+                tvStatus.text     = "🔄 Status: Enrolling..."
                 tvSyncStatus.text = "Connecting to server..."
 
                 val response = RetrofitClient.instance.enroll(
@@ -116,12 +117,12 @@ class MainActivity : AppCompatActivity() {
                         Server    : Connected ✅
                     """.trimIndent()
                 } else {
-                    tvStatus.text = "🔴 Status: Enrollment Failed"
+                    tvStatus.text     = "🔴 Status: Enrollment Failed"
                     tvSyncStatus.text = "❌ Error: ${response.code()} - ${response.message()}"
                 }
             } catch (e: Exception) {
-                tvStatus.text = "🔴 Status: Connection Error"
-                tvSyncStatus.text = "❌ Error: ${e.message}\n\nMake sure backend is running!"
+                tvStatus.text     = "🔴 Status: Connection Error"
+                tvSyncStatus.text = "❌ Error: ${e.message}\n\nCheck internet connection!"
             }
         }
     }
@@ -141,7 +142,9 @@ class MainActivity : AppCompatActivity() {
                     serial       = "RESTRICTED"
                 )
 
-                val isDeviceOwner = devicePolicyManager.isDeviceOwnerApp(packageName)
+                val isDeviceOwner = devicePolicyManager
+                    .isDeviceOwnerApp(packageName)
+
                 tvDeviceInfo.text = """
                     📱 Device ID    : $deviceId
                     📌 Model        : ${deviceInfo.model}
@@ -152,11 +155,15 @@ class MainActivity : AppCompatActivity() {
                     👑 Device Owner : ${if (isDeviceOwner) "Yes ✅" else "No ❌"}
                 """.trimIndent()
 
-                val response = RetrofitClient.instance.sendDeviceInfo(deviceInfo)
+                val response = RetrofitClient.instance
+                    .sendDeviceInfo(deviceInfo)
+
                 if (response.isSuccessful) {
-                    tvSyncStatus.text = "✅ Device info sent to server successfully!"
+                    tvSyncStatus.text =
+                        "✅ Device info sent to server successfully!"
                 } else {
-                    tvSyncStatus.text = "❌ Failed to send: ${response.code()}"
+                    tvSyncStatus.text =
+                        "❌ Failed to send: ${response.code()}"
                 }
             } catch (e: Exception) {
                 tvSyncStatus.text = "❌ Error: ${e.message}"
@@ -172,11 +179,12 @@ class MainActivity : AppCompatActivity() {
                 tvSystemApps.text = "..."
                 tvUserApps.text   = "..."
 
-                val pm = packageManager
+                val pm       = packageManager
                 val packages = pm.getInstalledPackages(0)
 
                 val apps = packages.mapNotNull { pkg ->
-                    val appInfo = pkg.applicationInfo ?: return@mapNotNull null
+                    val appInfo = pkg.applicationInfo
+                        ?: return@mapNotNull null
                     AppItem(
                         deviceId      = deviceId,
                         appName       = appInfo.loadLabel(pm).toString(),
@@ -186,7 +194,8 @@ class MainActivity : AppCompatActivity() {
                         isSystemApp   = (appInfo.flags and
                                 ApplicationInfo.FLAG_SYSTEM) != 0,
                         installSource = try {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            if (Build.VERSION.SDK_INT >=
+                                Build.VERSION_CODES.R) {
                                 pm.getInstallSourceInfo(pkg.packageName)
                                     .installingPackageName ?: "Unknown"
                             } else {
@@ -229,8 +238,11 @@ class MainActivity : AppCompatActivity() {
             1, java.util.concurrent.TimeUnit.HOURS
         ).setConstraints(
             androidx.work.Constraints.Builder()
-                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                .setRequiredNetworkType(
+                    androidx.work.NetworkType.CONNECTED)
                 .build()
+        ).setInitialDelay(
+            1, java.util.concurrent.TimeUnit.HOURS
         ).build()
 
         androidx.work.WorkManager.getInstance(this)
