@@ -13,7 +13,6 @@
             color: #333;
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, #1A237E, #1565C0);
             color: white;
@@ -27,10 +26,8 @@
         .header p  { font-size: 13px; opacity: 0.8; margin-top: 4px; }
         .header-right { text-align: right; font-size: 13px; opacity: 0.8; }
 
-        /* Main Container */
         .container { padding: 24px 32px; }
 
-        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -49,15 +46,11 @@
             font-weight: bold;
             margin-bottom: 8px;
         }
-        .stat-card .label {
-            font-size: 13px;
-            color: #757575;
-        }
+        .stat-card .label { font-size: 13px; color: #757575; }
         .stat-card.blue   .number { color: #1565C0; }
         .stat-card.green  .number { color: #2E7D32; }
         .stat-card.purple .number { color: #6A1B9A; }
 
-        /* Section Title */
         .section-title {
             font-size: 18px;
             font-weight: bold;
@@ -67,7 +60,6 @@
             border-bottom: 2px solid #E3F2FD;
         }
 
-        /* Device Cards */
         .devices-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -96,11 +88,7 @@
         }
         .device-info-row .key   { color: #757575; }
         .device-info-row .value { font-weight: 500; }
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
+        .btn-group { display: flex; gap: 8px; margin-top: 12px; }
         .btn {
             flex: 1;
             padding: 8px;
@@ -114,7 +102,6 @@
         .btn-purple { background: #F3E5F5; color: #6A1B9A; }
         .btn:hover  { opacity: 0.8; }
 
-        /* Detail Panel */
         .detail-panel {
             background: white;
             border-radius: 12px;
@@ -148,7 +135,6 @@
             word-break: break-all;
         }
 
-        /* Apps Table */
         .apps-table {
             width: 100%;
             border-collapse: collapse;
@@ -174,7 +160,6 @@
         .badge-system { background: #E8F5E9; color: #2E7D32; }
         .badge-user   { background: #E3F2FD; color: #1565C0; }
 
-        /* Search */
         .search-box {
             width: 100%;
             padding: 10px 16px;
@@ -186,7 +171,6 @@
         }
         .search-box:focus { border-color: #1565C0; }
 
-        /* Loading */
         .loading {
             text-align: center;
             padding: 40px;
@@ -194,7 +178,6 @@
             font-size: 16px;
         }
 
-        /* Close button */
         .close-btn {
             float: right;
             background: #FFEBEE;
@@ -206,7 +189,6 @@
             font-size: 13px;
         }
 
-        /* Status badge */
         .status-enrolled {
             background: #E8F5E9;
             color: #2E7D32;
@@ -216,7 +198,6 @@
             font-weight: 500;
         }
 
-        /* Refresh button */
         .refresh-btn {
             background: white;
             color: #1565C0;
@@ -227,6 +208,85 @@
             font-size: 13px;
         }
         .refresh-btn:hover { background: #E3F2FD; }
+
+        /* QR Section */
+        .qr-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .qr-input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .qr-input-group label {
+            font-size: 12px;
+            color: #757575;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .qr-input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #BDBDBD;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+        .qr-input-group input:focus {
+            border-color: #1565C0;
+        }
+        .qr-generate-btn {
+            background: #1565C0;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        .qr-generate-btn:hover { background: #1A237E; }
+        .qr-display {
+            display: none;
+            text-align: center;
+        }
+        .qr-code-box {
+            display: inline-block;
+            padding: 16px;
+            background: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .qr-hint {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 12px;
+        }
+        .qr-content-preview {
+            background: #F5F5F5;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
+            margin-top: 12px;
+        }
+        .qr-content-preview p {
+            font-size: 11px;
+            color: #757575;
+            margin-bottom: 4px;
+        }
+        .qr-content-preview pre {
+            font-size: 11px;
+            color: #424242;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -280,6 +340,57 @@
         <div id="appsContent"></div>
     </div>
 
+    <!-- QR Code Section -->
+    <div class="section-title">📷 QR Code Provisioning</div>
+    <div class="qr-section">
+
+        <p style="color:#757575; font-size:13px; margin-bottom:16px;">
+            Generate a QR code for device enrollment.
+            Factory reset a phone → tap screen 6 times → scan this QR.
+        </p>
+
+        <div class="qr-input-grid">
+            <div class="qr-input-group">
+                <label>Enrollment Token</label>
+                <input type="text" id="qrToken"
+                       value="MDM_TOKEN_2024">
+            </div>
+            <div class="qr-input-group">
+                <label>WiFi Name (SSID)</label>
+                <input type="text" id="qrWifi"
+                       placeholder="Your WiFi name">
+            </div>
+            <div class="qr-input-group">
+                <label>WiFi Password</label>
+                <input type="password" id="qrWifiPass"
+                       placeholder="Your WiFi password">
+            </div>
+            <div class="qr-input-group">
+                <label>App Download URL</label>
+                <input type="text" id="qrApkUrl"
+                       value="https://mdm-project-production.up.railway.app/apk/mdm.apk">
+            </div>
+        </div>
+
+        <button class="qr-generate-btn" onclick="generateQR()">
+            📷 Generate QR Code
+        </button>
+
+        <div class="qr-display" id="qrDisplay">
+            <div class="qr-code-box">
+                <div id="qrCode"></div>
+            </div>
+            <p class="qr-hint">
+                Show this QR code to a factory-reset Android device during setup
+            </p>
+            <div class="qr-content-preview">
+                <p>📋 QR Content:</p>
+                <pre id="qrContent"></pre>
+            </div>
+        </div>
+
+    </div>
+
     <!-- Enrolled Devices -->
     <div class="section-title">📱 Enrolled Devices</div>
     <div id="devicesContainer">
@@ -288,9 +399,12 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <script>
     const API = 'https://mdm-project-production.up.railway.app';
     let allApps = [];
+    let qrInstance = null;
 
     // Update clock
     function updateClock() {
@@ -300,6 +414,46 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // Generate QR Code
+    function generateQR() {
+        const token   = document.getElementById('qrToken').value;
+        const wifi    = document.getElementById('qrWifi').value;
+        const wifiPwd = document.getElementById('qrWifiPass').value;
+        const apkUrl  = document.getElementById('qrApkUrl').value;
+
+        const qrData = JSON.stringify({
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME":
+                "com.sujan.mdm/.MyDeviceAdminReceiver",
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION":
+            apkUrl,
+            "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
+            "android.app.extra.PROVISIONING_WIFI_SSID": wifi,
+            "android.app.extra.PROVISIONING_WIFI_PASSWORD": wifiPwd,
+            "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
+                "enrollment_token": token
+            }
+        }, null, 2);
+
+        // Show QR display
+        document.getElementById('qrDisplay').style.display = 'block';
+        document.getElementById('qrContent').textContent = qrData;
+
+        // Clear old QR
+        document.getElementById('qrCode').innerHTML = '';
+        qrInstance = null;
+
+        // Generate new QR
+        qrInstance = new QRCode(
+            document.getElementById('qrCode'), {
+                text: qrData,
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+    }
 
     // Load dashboard data
     async function loadDashboard() {
@@ -440,9 +594,9 @@
                 '<div class="loading">Loading apps...</div>';
             document.getElementById('appsPanel').classList.add('active');
 
-            const res  = await fetch(
+            const res = await fetch(
                 `${API}/api/devices/${deviceId}/apps`);
-            allApps    = await res.json();
+            allApps   = await res.json();
             renderApps(allApps);
             document.getElementById('appsPanel')
                 .scrollIntoView({ behavior: 'smooth' });

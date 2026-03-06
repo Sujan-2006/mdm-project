@@ -112,63 +112,9 @@
                     android:textSize="15sp"
                     android:layout_marginBottom="8dp"/>
 
-                <!-- QR Code Button -->
-                <Button
-                    android:id="@+id/btnShowQr"
-                    android:text="📷 Show QR Code"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#0288D1"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"/>
-
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- QR Code Card (hidden by default) -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardQr"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="#FFFFFF"
-                android:gravity="center">
-
-                <TextView
-                    android:text="QR Code Provisioning"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A237E"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"/>
-
-                <ImageView
-                    android:id="@+id/ivQrCode"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:layout_marginBottom="12dp"/>
-
-                <TextView
-                    android:text="Scan this QR code during device setup\nto enroll as Device Owner"
-                    android:textSize="12sp"
-                    android:textColor="#757575"
-                    android:gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
         <!-- Device Info Card -->
         <androidx.cardview.widget.CardView

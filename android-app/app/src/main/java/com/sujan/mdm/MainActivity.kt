@@ -5,13 +5,10 @@ import android.content.ComponentName
 import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -25,12 +22,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSystemApps: TextView
     private lateinit var tvUserApps: TextView
     private lateinit var btnEnroll: Button
-    private lateinit var btnShowQr: Button
     private lateinit var btnCollectInfo: Button
     private lateinit var btnSyncApps: Button
     private lateinit var etEnrollmentToken: EditText
-    private lateinit var cardQr: CardView
-    private lateinit var ivQrCode: ImageView
 
     private lateinit var devicePolicyManager: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
@@ -59,12 +53,9 @@ class MainActivity : AppCompatActivity() {
         tvSystemApps      = findViewById(R.id.tvSystemApps)
         tvUserApps        = findViewById(R.id.tvUserApps)
         btnEnroll         = findViewById(R.id.btnEnroll)
-        btnShowQr         = findViewById(R.id.btnShowQr)
         btnCollectInfo    = findViewById(R.id.btnCollectInfo)
         btnSyncApps       = findViewById(R.id.btnSyncApps)
         etEnrollmentToken = findViewById(R.id.etEnrollmentToken)
-        cardQr            = findViewById(R.id.cardQr)
-        ivQrCode          = findViewById(R.id.ivQrCode)
 
         // Check Device Owner status
         checkDeviceOwnerStatus()
@@ -77,11 +68,6 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             enrollDevice(token)
-        }
-
-        // Show QR button
-        btnShowQr.setOnClickListener {
-            showQRCode()
         }
 
         // Collect info button
@@ -135,27 +121,6 @@ class MainActivity : AppCompatActivity() {
                 tvStatus.text = "🔴 Status: Connection Error"
                 tvSyncStatus.text = "❌ Error: ${e.message}\n\nMake sure backend is running!"
             }
-        }
-    }
-
-    private fun showQRCode() {
-        val token = etEnrollmentToken.text.toString().trim()
-
-        val qrContent = QRCodeGenerator.generateEnrollmentQRContent(
-            packageName = packageName,
-            deviceAdminReceiver = ".MyDeviceAdminReceiver",
-            enrollmentToken = token.ifEmpty { "MDM_TOKEN_2024" }
-        )
-
-        val qrBitmap = QRCodeGenerator.generateQRCode(qrContent)
-        ivQrCode.setImageBitmap(qrBitmap)
-
-        if (cardQr.visibility == View.GONE) {
-            cardQr.visibility = View.VISIBLE
-            btnShowQr.text = "❌ Hide QR Code"
-        } else {
-            cardQr.visibility = View.GONE
-            btnShowQr.text = "📷 Show QR Code"
         }
     }
 
