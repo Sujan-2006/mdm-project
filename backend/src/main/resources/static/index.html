@@ -3,699 +3,473 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDM Admin Dashboard</title>
+    <title>MDM Admin Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        :root {
+            --bg:       #0a0d14;
+            --surface:  #111520;
+            --surface2: #161b2e;
+            --border:   #1e2640;
+            --accent:   #4f8ef7;
+            --accent2:  #7c3aed;
+            --green:    #10d97e;
+            --orange:   #f59e0b;
+            --red:      #ef4444;
+            --text:     #e2e8f0;
+            --muted:    #64748b;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #F0F4F8;
-            color: #333;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1A237E, #1565C0);
-            color: white;
-            padding: 20px 32px;
+            font-family: 'Syne', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .header h1 { font-size: 22px; }
-        .header p  { font-size: 13px; opacity: 0.8; margin-top: 4px; }
-        .header-right { text-align: right; font-size: 13px; opacity: 0.8; }
-
-        .container { padding: 24px 32px; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .stat-card .number {
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .stat-card .label { font-size: 13px; color: #757575; }
-        .stat-card.blue   .number { color: #1565C0; }
-        .stat-card.green  .number { color: #2E7D32; }
-        .stat-card.purple .number { color: #6A1B9A; }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #1A237E;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #E3F2FD;
         }
 
-        .devices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+        /* sidebar */
+        .sidebar {
+            width: 220px; min-width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            padding: 24px 0;
         }
-        .device-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-left: 4px solid #1565C0;
-        }
-        .device-card h3 {
-            font-size: 14px;
-            color: #1A237E;
-            margin-bottom: 12px;
-            word-break: break-all;
-        }
-        .device-info-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            padding: 4px 0;
-            border-bottom: 1px solid #F5F5F5;
-        }
-        .device-info-row .key   { color: #757575; }
-        .device-info-row .value { font-weight: 500; }
-        .btn-group { display: flex; gap: 8px; margin-top: 12px; }
-        .btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .btn-blue   { background: #E3F2FD; color: #1565C0; }
-        .btn-purple { background: #F3E5F5; color: #6A1B9A; }
-        .btn:hover  { opacity: 0.8; }
-
-        .detail-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
-            display: none;
-        }
-        .detail-panel.active { display: block; }
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        .detail-item {
-            background: #F5F5F5;
-            padding: 12px;
-            border-radius: 8px;
-        }
-        .detail-item .key {
-            font-size: 11px;
-            color: #757575;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-        .detail-item .value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1A237E;
-            word-break: break-all;
-        }
-
-        .apps-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        .apps-table th {
-            background: #1A237E;
-            color: white;
-            padding: 10px 12px;
-            text-align: left;
-        }
-        .apps-table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #F0F0F0;
-        }
-        .apps-table tr:hover td { background: #F5F5F5; }
-        .badge {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-        .badge-system { background: #E8F5E9; color: #2E7D32; }
-        .badge-user   { background: #E3F2FD; color: #1565C0; }
-
-        .search-box {
-            width: 100%;
-            padding: 10px 16px;
-            border: 1px solid #BDBDBD;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            outline: none;
-        }
-        .search-box:focus { border-color: #1565C0; }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #757575;
-            font-size: 16px;
-        }
-
-        .close-btn {
-            float: right;
-            background: #FFEBEE;
-            color: #C62828;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .status-enrolled {
-            background: #E8F5E9;
-            color: #2E7D32;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .refresh-btn {
-            background: white;
-            color: #1565C0;
-            border: 1px solid #1565C0;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .refresh-btn:hover { background: #E3F2FD; }
-
-        .qr-section {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
-        }
-        .qr-input-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .qr-input-group label {
-            font-size: 12px;
-            color: #757575;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .qr-input-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #BDBDBD;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-        }
-        .qr-input-group input:focus { border-color: #1565C0; }
-        .qr-generate-btn {
-            background: #1565C0;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+        .logo {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
             margin-bottom: 20px;
         }
-        .qr-generate-btn:hover { background: #1A237E; }
-        .qr-display {
-            display: none;
-            text-align: center;
+        .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; margin-bottom: 10px;
         }
-        .qr-code-box {
-            display: inline-block;
-            padding: 16px;
-            background: white;
-            border: 2px solid #E0E0E0;
-            border-radius: 12px;
-            margin-bottom: 12px;
+        .logo h2 { font-size: 13px; font-weight: 800; letter-spacing:.06em; }
+        .logo p  { font-size: 10px; color: var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px; }
+        .nav-label {
+            font-size: 9px; font-family: 'JetBrains Mono', monospace;
+            color: var(--muted); letter-spacing:.15em;
+            padding: 0 20px; margin-bottom: 6px; text-transform: uppercase;
         }
-        .qr-hint {
-            font-size: 12px;
-            color: #757575;
-            margin-bottom: 12px;
+        .nav-section { margin-bottom: 12px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 20px; cursor: pointer;
+            font-size: 13px; font-weight: 600; color: var(--muted);
+            transition: all .15s; border-left: 2px solid transparent;
         }
-        .qr-content-preview {
-            background: #F5F5F5;
-            border-radius: 8px;
-            padding: 12px;
-            text-align: left;
-            margin-top: 12px;
-        }
-        .qr-content-preview p {
-            font-size: 11px;
-            color: #757575;
-            margin-bottom: 4px;
-        }
-        .qr-content-preview pre {
-            font-size: 11px;
-            color: #424242;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: rgba(79,142,247,.1); color: var(--accent); border-left-color: var(--accent); }
+        .nav-item .ico { font-size: 15px; width: 18px; text-align: center; }
+        .sidebar-footer { margin-top: auto; padding: 16px 20px 0; border-top: 1px solid var(--border); }
+        .dot { width:7px; height:7px; background:var(--green); border-radius:50%; display:inline-block; margin-right:6px; animation:blink 2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .dot-text { font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); }
 
-        .error-msg {
-            background: #FFEBEE;
-            color: #C62828;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 12px;
+        /* main */
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+        .topbar {
+            height:56px; background:var(--surface);
+            border-bottom:1px solid var(--border);
+            display:flex; align-items:center;
+            padding:0 28px; gap:16px; flex-shrink:0;
         }
+        .topbar-title { font-size:15px; font-weight:700; flex:1; }
+        .topbar-clock { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); }
+        .topbar-btn {
+            background:rgba(79,142,247,.1); border:1px solid rgba(79,142,247,.3);
+            color:var(--accent); padding:6px 16px; border-radius:6px; cursor:pointer;
+            font-size:12px; font-family:'Syne',sans-serif; font-weight:700; transition:all .15s;
+        }
+        .topbar-btn:hover { background:rgba(79,142,247,.2); }
+        .content { flex:1; overflow-y:auto; padding:28px; }
+        .content::-webkit-scrollbar { width:4px; }
+        .content::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+        /* pages */
+        .page { display:none; }
+        .page.active { display:block; }
+
+        /* stats */
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+        .stat-card {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; padding:22px; position:relative; overflow:hidden; transition:border-color .2s;
+        }
+        .stat-card:hover { border-color:var(--accent); }
+        .stat-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+        .stat-card.cb::after  { background:var(--accent); }
+        .stat-card.cg::after  { background:var(--green); }
+        .stat-card.cp::after  { background:var(--accent2); }
+        .stat-lbl { font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px; }
+        .stat-val { font-size:38px; font-weight:800; line-height:1; margin-bottom:4px; }
+        .stat-card.cb .stat-val { color:var(--accent); }
+        .stat-card.cg .stat-val { color:var(--green); }
+        .stat-card.cp .stat-val { color:var(--accent2); }
+        .stat-sub { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+
+        /* sec header */
+        .sec-hdr {
+            font-size:11px; font-family:'JetBrains Mono',monospace;
+            color:var(--muted); letter-spacing:.12em; text-transform:uppercase;
+            margin-bottom:16px;
+            display:flex; align-items:center; gap:8px;
+        }
+        .sec-hdr::before { content:''; display:inline-block; width:4px; height:14px; background:var(--accent); border-radius:2px; }
+
+        /* device cards */
+        .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+        .dcard {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; padding:20px; transition:all .2s;
+        }
+        .dcard:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px rgba(79,142,247,.08); }
+        .dcard-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+        .dcard-icon { width:40px; height:40px; background:rgba(79,142,247,.1); border:1px solid rgba(79,142,247,.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+        .badge-ok { background:rgba(16,217,126,.1); border:1px solid rgba(16,217,126,.3); color:var(--green); padding:3px 10px; border-radius:20px; font-size:10px; font-family:'JetBrains Mono',monospace; }
+        .dcard-id { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:3px; }
+        .dcard-id span { color:var(--accent); }
+        .dcard-meta { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; line-height:1.7; margin-bottom:16px; }
+        .dcard-btns { display:flex; gap:8px; }
+        .dcard-btn { flex:1; padding:8px; border:1px solid var(--border); border-radius:7px; background:transparent; color:var(--muted); cursor:pointer; font-size:11px; font-family:'Syne',sans-serif; font-weight:600; transition:all .15s; }
+        .dcard-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(79,142,247,.05); }
+        .dcard-btn.v2:hover { border-color:var(--accent2); color:var(--accent2); background:rgba(124,58,237,.05); }
+
+        /* overlay / modal */
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:100; backdrop-filter:blur(6px); align-items:center; justify-content:center; }
+        .overlay.on { display:flex; }
+        .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:90%; max-width:820px; max-height:88vh; overflow-y:auto; padding:28px; animation:up .2s ease; }
+        .modal::-webkit-scrollbar { width:4px; }
+        .modal::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+        @keyframes up { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .modal-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+        .modal-title { font-size:15px; font-weight:700; }
+        .modal-close { width:32px; height:32px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25); border-radius:8px; color:var(--red); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+        .modal-close:hover { background:rgba(239,68,68,.2); }
+
+        /* info grid */
+        .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+        .info-item { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+        .info-k { font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; }
+        .info-v { font-size:13px; font-weight:600; font-family:'JetBrains Mono',monospace; word-break:break-all; }
+
+        /* apps table */
+        .srch { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 16px; color:var(--text); font-size:13px; font-family:'JetBrains Mono',monospace; outline:none; margin-bottom:14px; transition:border-color .15s; }
+        .srch:focus { border-color:var(--accent); }
+        .srch::placeholder { color:var(--muted); }
+        .app-pills { display:flex; gap:10px; margin-bottom:14px; }
+        .pill { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:3px 12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); }
+        .pill span { color:var(--text); font-weight:600; }
+        .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+        .tbl th { background:var(--surface2); color:var(--muted); padding:10px 14px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--border); }
+        .tbl td { padding:9px 14px; border-bottom:1px solid rgba(30,38,64,.5); font-family:'JetBrains Mono',monospace; }
+        .tbl tr:hover td { background:var(--surface2); }
+        .tbadge { padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; }
+        .tbadge-sys { background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); color:var(--orange); }
+        .tbadge-usr { background:rgba(79,142,247,.1); border:1px solid rgba(79,142,247,.3); color:var(--accent); }
+
+        /* QR */
+        .qr-wrap { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+        .qr-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; }
+        .qr-card-title { font-size:13px; font-weight:700; margin-bottom:20px; }
+        .fgrp { margin-bottom:14px; }
+        .flbl { display:block; font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px; }
+        .finp { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:13px; font-family:'JetBrains Mono',monospace; outline:none; transition:border-color .15s; }
+        .finp:focus { border-color:var(--accent); }
+        .finp::placeholder { color:var(--muted); }
+        .gen-btn { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:8px; padding:12px; color:white; font-size:13px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; margin-top:6px; transition:opacity .15s; }
+        .gen-btn:hover { opacity:.9; }
+        .qr-out { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:320px; }
+        .qr-placeholder { text-align:center; color:var(--muted); }
+        .qr-placeholder .bigico { font-size:52px; margin-bottom:12px; }
+        .qr-placeholder p { font-size:13px; font-family:'JetBrains Mono',monospace; }
+        .qr-res { display:none; text-align:center; width:100%; }
+        .qr-box { background:white; padding:16px; border-radius:12px; display:inline-block; margin-bottom:14px; }
+        .qr-hint { font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:14px; }
+        .qr-pre { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:left; width:100%; max-height:160px; overflow-y:auto; }
+        .qr-pre pre { font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--green); white-space:pre-wrap; word-break:break-all; }
+        .steps-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px; margin-top:24px; }
+        .steps-list { list-style:none; }
+        .steps-list li { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--muted); }
+        .steps-list li:last-child { border-bottom:none; }
+        .step-n { width:22px; height:22px; background:rgba(79,142,247,.1); border:1px solid rgba(79,142,247,.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--accent); flex-shrink:0; }
+
+        /* states */
+        .st-loading { text-align:center; padding:48px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px; }
+        .st-empty   { text-align:center; padding:48px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px; }
+        .st-err { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); border-radius:8px; padding:12px 16px; color:var(--red); font-size:12px; font-family:'JetBrains Mono',monospace; margin-bottom:16px; }
     </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="header">
-    <div>
-        <h1>🛡️ MDM Admin Dashboard</h1>
-        <p>Android Enterprise Device Management System</p>
+<aside class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <h2>MDM CONSOLE</h2>
+        <p>Enterprise Device Mgmt</p>
     </div>
-    <div class="header-right">
-        <div id="currentTime"></div>
-        <button class="refresh-btn" onclick="loadDashboard()"
-                style="margin-top:8px">🔄 Refresh</button>
+    <div class="nav-section">
+        <div class="nav-label">Overview</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)">
+            <span class="ico">📊</span> Dashboard
+        </div>
+    </div>
+    <div class="nav-section">
+        <div class="nav-label">Management</div>
+        <div class="nav-item" onclick="showPage('devices',this)">
+            <span class="ico">📱</span> Devices
+        </div>
+        <div class="nav-item" onclick="showPage('qr',this)">
+            <span class="ico">📷</span> QR Enrollment
+        </div>
+    </div>
+    <div class="sidebar-footer">
+        <span class="dot"></span>
+        <span class="dot-text">System Online</span>
+    </div>
+</aside>
+
+<div class="main">
+    <div class="topbar">
+        <div class="topbar-title" id="pageTitle">Dashboard</div>
+        <div class="topbar-clock" id="clock"></div>
+        <button class="topbar-btn" onclick="refresh()">⟳ Refresh</button>
+    </div>
+
+    <div class="content">
+
+        <!-- Dashboard Page -->
+        <div class="page active" id="page-dashboard">
+            <div class="stats-row">
+                <div class="stat-card cb">
+                    <div class="stat-lbl">Enrolled Devices</div>
+                    <div class="stat-val" id="totalDevices">—</div>
+                    <div class="stat-sub">total registered</div>
+                </div>
+                <div class="stat-card cg">
+                    <div class="stat-lbl">Apps Tracked</div>
+                    <div class="stat-val" id="totalApps">—</div>
+                    <div class="stat-sub">across all devices</div>
+                </div>
+                <div class="stat-card cp">
+                    <div class="stat-lbl">Active Enrollments</div>
+                    <div class="stat-val" id="totalEnrolled">—</div>
+                    <div class="stat-sub">currently active</div>
+                </div>
+            </div>
+            <div class="sec-hdr">Recent Devices</div>
+            <div id="dashCards"><div class="st-loading">⟳ Loading devices...</div></div>
+        </div>
+
+        <!-- Devices Page -->
+        <div class="page" id="page-devices">
+            <div class="sec-hdr">All Enrolled Devices</div>
+            <div id="allCards"><div class="st-loading">⟳ Loading devices...</div></div>
+        </div>
+
+        <!-- QR Page -->
+        <div class="page" id="page-qr">
+            <div class="sec-hdr" style="margin-bottom:20px">QR Code Provisioning</div>
+            <div class="qr-wrap">
+                <div class="qr-card">
+                    <div class="qr-card-title">Generate Enrollment QR</div>
+                    <div class="fgrp">
+                        <label class="flbl">Enrollment Token</label>
+                        <input class="finp" type="text" id="qrToken" value="MDM_TOKEN_2024">
+                    </div>
+                    <div class="fgrp">
+                        <label class="flbl">WiFi SSID</label>
+                        <input class="finp" type="text" id="qrWifi" placeholder="Network name">
+                    </div>
+                    <div class="fgrp">
+                        <label class="flbl">WiFi Password</label>
+                        <input class="finp" type="password" id="qrWifiPass" placeholder="••••••••">
+                    </div>
+                    <div class="fgrp">
+                        <label class="flbl">APK Download URL</label>
+                        <input class="finp" type="text" id="qrApkUrl"
+                               value="https://mdm-project-production.up.railway.app/apk/mdm.apk">
+                    </div>
+                    <button class="gen-btn" onclick="generateQR()">Generate QR Code →</button>
+                </div>
+                <div class="qr-out">
+                    <div class="qr-placeholder" id="qrPlaceholder">
+                        <div class="bigico">📷</div>
+                        <p>QR code will appear here</p>
+                    </div>
+                    <div class="qr-res" id="qrResult">
+                        <div class="qr-box"><div id="qrCode"></div></div>
+                        <div class="qr-hint">Scan during factory reset setup</div>
+                        <div class="qr-pre"><pre id="qrContent"></pre></div>
+                    </div>
+                </div>
+            </div>
+            <div class="steps-card">
+                <div class="sec-hdr" style="margin-bottom:16px">How to Enroll via QR</div>
+                <ul class="steps-list">
+                    <li><span class="step-n">1</span>Fill in WiFi credentials and enrollment token above</li>
+                    <li><span class="step-n">2</span>Click Generate QR Code button</li>
+                    <li><span class="step-n">3</span>Factory reset the target Android device</li>
+                    <li><span class="step-n">4</span>On welcome screen — tap the display 6 times quickly</li>
+                    <li><span class="step-n">5</span>Camera opens — scan the QR code shown above</li>
+                    <li><span class="step-n">6</span>Device auto-connects to WiFi, downloads and installs MDM app</li>
+                    <li><span class="step-n">7</span>Device appears in dashboard automatically ✓</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- Main Content -->
-<div class="container">
-
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card blue">
-            <div class="number" id="totalDevices">...</div>
-            <div class="label">📱 Enrolled Devices</div>
+<!-- Device Info Modal -->
+<div class="overlay" id="ov-info" onclick="ovClose(event,'ov-info')">
+    <div class="modal">
+        <div class="modal-hdr">
+            <div class="modal-title" id="infoTitle">📋 Device Info</div>
+            <button class="modal-close" onclick="closeOv('ov-info')">✕</button>
         </div>
-        <div class="stat-card green">
-            <div class="number" id="totalApps">...</div>
-            <div class="label">📦 Total Apps Tracked</div>
-        </div>
-        <div class="stat-card purple">
-            <div class="number" id="totalEnrolled">...</div>
-            <div class="label">✅ Active Enrollments</div>
-        </div>
+        <div id="infoGrid"><div class="st-loading">⟳ Loading...</div></div>
     </div>
+</div>
 
-    <!-- Device Detail Panel -->
-    <div class="detail-panel" id="detailPanel">
-        <button class="close-btn" onclick="closeDetail()">✕ Close</button>
-        <div class="section-title" id="detailTitle">Device Details</div>
-        <div class="detail-grid" id="detailGrid"></div>
-    </div>
-
-    <!-- Apps Panel -->
-    <div class="detail-panel" id="appsPanel">
-        <button class="close-btn" onclick="closeApps()">✕ Close</button>
-        <div class="section-title" id="appsTitle">App Inventory</div>
-        <input type="text" class="search-box"
-               placeholder="🔍 Search apps..."
+<!-- Apps Modal -->
+<div class="overlay" id="ov-apps" onclick="ovClose(event,'ov-apps')">
+    <div class="modal">
+        <div class="modal-hdr">
+            <div class="modal-title" id="appsTitle">📦 App Inventory</div>
+            <button class="modal-close" onclick="closeOv('ov-apps')">✕</button>
+        </div>
+        <input class="srch" type="text" placeholder="// search apps or packages..."
                oninput="filterApps(this.value)">
+        <div class="app-pills" id="appPills"></div>
         <div id="appsContent"></div>
     </div>
-
-    <!-- QR Code Section -->
-    <div class="section-title">📷 QR Code Provisioning</div>
-    <div class="qr-section">
-        <p style="color:#757575; font-size:13px; margin-bottom:16px;">
-            Generate a QR code for device enrollment.
-            Factory reset a phone → tap screen 6 times → scan this QR.
-        </p>
-        <div class="qr-input-grid">
-            <div class="qr-input-group">
-                <label>Enrollment Token</label>
-                <input type="text" id="qrToken" value="MDM_TOKEN_2024">
-            </div>
-            <div class="qr-input-group">
-                <label>WiFi Name (SSID)</label>
-                <input type="text" id="qrWifi" placeholder="Your WiFi name">
-            </div>
-            <div class="qr-input-group">
-                <label>WiFi Password</label>
-                <input type="password" id="qrWifiPass"
-                       placeholder="Your WiFi password">
-            </div>
-            <div class="qr-input-group">
-                <label>App Download URL</label>
-                <input type="text" id="qrApkUrl"
-                       value="https://mdm-project-production.up.railway.app/apk/mdm.apk">
-            </div>
-        </div>
-        <button class="qr-generate-btn" onclick="generateQR()">
-            📷 Generate QR Code
-        </button>
-        <div class="qr-display" id="qrDisplay">
-            <div class="qr-code-box">
-                <div id="qrCode"></div>
-            </div>
-            <p class="qr-hint">
-                Show this QR to a factory-reset Android device during setup
-            </p>
-            <div class="qr-content-preview">
-                <p>📋 QR Content:</p>
-                <pre id="qrContent"></pre>
-            </div>
-        </div>
-    </div>
-
-    <!-- Enrolled Devices -->
-    <div class="section-title">📱 Enrolled Devices</div>
-    <div id="devicesContainer">
-        <div class="loading">Loading devices...</div>
-    </div>
-
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
 <script>
     const API = 'https://mdm-project-production.up.railway.app';
     let allApps = [];
-    let qrInstance = null;
+    let qrInst  = null;
 
-    function updateClock() {
-        document.getElementById('currentTime').textContent =
-            new Date().toLocaleString();
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    setInterval(() => {
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }, 1000);
 
-    function generateQR() {
-        const token   = document.getElementById('qrToken').value;
-        const wifi    = document.getElementById('qrWifi').value;
-        const wifiPwd = document.getElementById('qrWifiPass').value;
-        const apkUrl  = document.getElementById('qrApkUrl').value;
-
-        const qrData = JSON.stringify({
-            "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME":
-                "com.sujan.mdm/.MyDeviceAdminReceiver",
-            "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION":
-            apkUrl,
-            "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
-            "android.app.extra.PROVISIONING_WIFI_SSID": wifi,
-            "android.app.extra.PROVISIONING_WIFI_PASSWORD": wifiPwd,
-            "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
-                "enrollment_token": token
-            }
-        }, null, 2);
-
-        document.getElementById('qrDisplay').style.display = 'block';
-        document.getElementById('qrContent').textContent = qrData;
-        document.getElementById('qrCode').innerHTML = '';
-        qrInstance = null;
-
-        qrInstance = new QRCode(
-            document.getElementById('qrCode'), {
-                text: qrData,
-                width: 200,
-                height: 200,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
+    function showPage(name, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('page-' + name).classList.add('active');
+        el.classList.add('active');
+        const t = {dashboard:'Dashboard', devices:'All Devices', qr:'QR Enrollment'};
+        document.getElementById('pageTitle').textContent = t[name];
+        if (name === 'devices') renderCards('allCards');
     }
 
-    async function loadDashboard() {
-        await loadStats();
-        await loadDevices();
-    }
+    function refresh() { loadStats(); renderCards('dashCards'); }
 
     async function loadStats() {
         try {
             const res  = await fetch(`${API}/api/stats`);
             const data = await res.json();
-            document.getElementById('totalDevices').textContent =
-                data.totalDevices;
-            document.getElementById('totalApps').textContent =
-                data.totalApps;
-            document.getElementById('totalEnrolled').textContent =
-                data.totalDevices;
-        } catch (e) {
-            console.error('Stats error:', e);
-        }
+            document.getElementById('totalDevices').textContent  = data.totalDevices;
+            document.getElementById('totalApps').textContent     = data.totalApps;
+            document.getElementById('totalEnrolled').textContent = data.totalDevices;
+        } catch(e) { console.error(e); }
     }
 
-    async function loadDevices() {
+    async function renderCards(cid) {
+        const c = document.getElementById(cid);
+        c.innerHTML = '<div class="st-loading">⟳ Loading devices...</div>';
         try {
             const res     = await fetch(`${API}/api/devices`);
             const devices = await res.json();
-            const container = document.getElementById('devicesContainer');
-
-            if (devices.length === 0) {
-                container.innerHTML =
-                    '<div class="loading">No devices enrolled yet.</div>';
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="devices-grid">
-                    ${devices.map(device => `
-                        <div class="device-card">
-                            <h3>📱 ${device.deviceId}</h3>
-                            <div class="device-info-row">
-                                <span class="key">Status</span>
-                                <span class="value">
-                                    <span class="status-enrolled">
-                                        ✅ Enrolled
-                                    </span>
-                                </span>
-                            </div>
-                            <div class="device-info-row">
-                                <span class="key">Token</span>
-                                <span class="value">
-                                    ${device.enrollmentToken}
-                                </span>
-                            </div>
-                            <div class="device-info-row">
-                                <span class="key">Enrolled At</span>
-                                <span class="value">
-                                    ${new Date(device.enrolledAt)
-                .toLocaleString()}
-                                </span>
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn btn-blue"
-                                    onclick="viewDeviceInfo('${device.deviceId}')">
-                                    📋 Device Info
-                                </button>
-                                <button class="btn btn-purple"
-                                    onclick="viewApps('${device.deviceId}')">
-                                    📦 View Apps
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
+            if (!devices.length) { c.innerHTML = '<div class="st-empty">No devices enrolled yet</div>'; return; }
+            c.innerHTML = `<div class="cards-grid">${devices.map(d => `
+            <div class="dcard">
+                <div class="dcard-head">
+                    <div class="dcard-icon">📱</div>
+                    <span class="badge-ok">● ENROLLED</span>
                 </div>
-            `;
-        } catch (e) {
-            document.getElementById('devicesContainer').innerHTML =
-                '<div class="loading">❌ Error loading devices!</div>';
-        }
+                <div class="dcard-id">ID: <span>${d.deviceId.substring(0,20)}...</span></div>
+                <div class="dcard-meta">Token: ${d.enrollmentToken}<br>Since: ${new Date(d.enrolledAt).toLocaleDateString()}</div>
+                <div class="dcard-btns">
+                    <button class="dcard-btn" onclick="viewInfo('${d.deviceId}')">📋 Device Info</button>
+                    <button class="dcard-btn v2" onclick="viewApps('${d.deviceId}')">📦 App Inventory</button>
+                </div>
+            </div>`).join('')}</div>`;
+        } catch(e) { c.innerHTML = '<div class="st-err">❌ Failed to load devices</div>'; }
     }
 
-    async function viewDeviceInfo(deviceId) {
+    async function viewInfo(deviceId) {
+        document.getElementById('infoTitle').textContent = '📋 ' + deviceId.substring(0,22) + '...';
+        document.getElementById('infoGrid').innerHTML = '<div class="st-loading">⟳ Loading...</div>';
+        document.getElementById('ov-info').classList.add('on');
         try {
-            closeApps();
-            document.getElementById('detailTitle').textContent =
-                `📋 Device Info — ${deviceId}`;
-            document.getElementById('detailGrid').innerHTML =
-                '<div class="loading">Loading...</div>';
-            document.getElementById('detailPanel').classList.add('active');
-            document.getElementById('detailPanel')
-                .scrollIntoView({ behavior: 'smooth' });
-
-            const res  = await fetch(
-                `${API}/api/devices/${deviceId}/info`);
-
-            if (!res.ok) {
-                document.getElementById('detailGrid').innerHTML =
-                    '<div class="error-msg">❌ Error loading device info!</div>';
-                return;
-            }
-
+            const res  = await fetch(`${API}/api/devices/${deviceId}/info`);
+            if (!res.ok) { document.getElementById('infoGrid').innerHTML = '<div class="st-err">❌ Error loading device info</div>'; return; }
             const info = await res.json();
-
             if (!info || Object.keys(info).length === 0) {
-                document.getElementById('detailGrid').innerHTML =
-                    '<div class="error-msg">⚠️ No device info collected yet. ' +
-                    'Open the app and click Collect Device Info!</div>';
-                return;
+                document.getElementById('infoGrid').innerHTML = '<div class="st-err">⚠ No device info yet. Open app → Collect Device Info</div>'; return;
             }
-
-            document.getElementById('detailGrid').innerHTML = `
-                <div class="detail-item">
-                    <div class="key">Device ID</div>
-                    <div class="value">
-                        ${info.deviceId || 'N/A'}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="key">Model</div>
-                    <div class="value">
-                        ${info.model || 'N/A'}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="key">Manufacturer</div>
-                    <div class="value">
-                        ${info.manufacturer || 'N/A'}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="key">Android Version</div>
-                    <div class="value">
-                        ${info.osVersion || 'N/A'}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="key">SDK Version</div>
-                    <div class="value">
-                        ${info.sdkVersion || 'N/A'}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="key">UUID</div>
-                    <div class="value">
-                        ${info.uuid || 'N/A'}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="key">Serial</div>
-                    <div class="value">
-                        ${info.serial || 'N/A'}
-                    </div>
-                </div>
-            `;
-        } catch (e) {
-            document.getElementById('detailGrid').innerHTML =
-                '<div class="error-msg">❌ Error: ' + e.message + '</div>';
-        }
+            const fields = [['Device ID',info.deviceId],['Model',info.model],['Manufacturer',info.manufacturer],['Android',info.osVersion],['SDK',info.sdkVersion],['UUID',info.uuid],['Serial',info.serial]];
+            document.getElementById('infoGrid').innerHTML = `<div class="info-grid">${fields.map(([k,v]) => `<div class="info-item"><div class="info-k">${k}</div><div class="info-v">${v||'N/A'}</div></div>`).join('')}</div>`;
+        } catch(e) { document.getElementById('infoGrid').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
     }
 
     async function viewApps(deviceId) {
+        document.getElementById('appsTitle').textContent = '📦 ' + deviceId.substring(0,22) + '...';
+        document.getElementById('appsContent').innerHTML = '<div class="st-loading">⟳ Loading apps...</div>';
+        document.getElementById('appPills').innerHTML = '';
+        document.getElementById('ov-apps').classList.add('on');
         try {
-            closeDetail();
-            document.getElementById('appsTitle').textContent =
-                `📦 App Inventory — ${deviceId}`;
-            document.getElementById('appsContent').innerHTML =
-                '<div class="loading">Loading apps...</div>';
-            document.getElementById('appsPanel').classList.add('active');
-            document.getElementById('appsPanel')
-                .scrollIntoView({ behavior: 'smooth' });
-
-            const res = await fetch(
-                `${API}/api/devices/${deviceId}/apps`);
+            const res = await fetch(`${API}/api/devices/${deviceId}/apps`);
             allApps   = await res.json();
-
-            if (allApps.length === 0) {
-                document.getElementById('appsContent').innerHTML =
-                    '<div class="error-msg">⚠️ No apps found. ' +
-                    'Open the app and click Sync App Inventory!</div>';
-                return;
-            }
-
+            if (!allApps.length) { document.getElementById('appsContent').innerHTML = '<div class="st-err">⚠ No apps found. Open app → Sync App Inventory</div>'; return; }
             renderApps(allApps);
-        } catch (e) {
-            document.getElementById('appsContent').innerHTML =
-                '<div class="loading">❌ Error loading apps!</div>';
-        }
+        } catch(e) { document.getElementById('appsContent').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
     }
 
     function renderApps(apps) {
-        const systemApps = apps.filter(a => a.systemApp).length;
-        const userApps   = apps.filter(a => !a.systemApp).length;
-
-        document.getElementById('appsContent').innerHTML = `
-            <div style="margin-bottom:12px; font-size:13px; color:#757575">
-                Total: <strong>${apps.length}</strong> |
-                System: <strong>${systemApps}</strong> |
-                User: <strong>${userApps}</strong>
-            </div>
-            <table class="apps-table">
-                <thead>
-                    <tr>
-                        <th>App Name</th>
-                        <th>Package Name</th>
-                        <th>Version</th>
-                        <th>Type</th>
-                        <th>Install Source</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${apps.map(app => `
-                        <tr>
-                            <td>${app.appName || 'N/A'}</td>
-                            <td style="color:#757575">
-                                ${app.packageName || 'N/A'}
-                            </td>
-                            <td>${app.versionName || 'N/A'}</td>
-                            <td>
-                                <span class="badge ${app.systemApp ?
-            'badge-system' : 'badge-user'}">
-                                    ${app.systemApp ?
-            '⚙️ System' : '👤 User'}
-                                </span>
-                            </td>
-                            <td>${app.installSource || 'N/A'}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+        const sys  = apps.filter(a => a.systemApp).length;
+        const user = apps.filter(a => !a.systemApp).length;
+        document.getElementById('appPills').innerHTML = `<div class="pill">Total <span>${apps.length}</span></div><div class="pill">System <span>${sys}</span></div><div class="pill">User <span>${user}</span></div>`;
+        document.getElementById('appsContent').innerHTML = `<table class="tbl"><thead><tr><th>App Name</th><th>Package</th><th>Version</th><th>Type</th><th>Source</th></tr></thead><tbody>${apps.map(a=>`<tr><td>${a.appName||'N/A'}</td><td style="color:var(--muted)">${a.packageName||'N/A'}</td><td>${a.versionName||'N/A'}</td><td><span class="tbadge ${a.systemApp?'tbadge-sys':'tbadge-usr'}">${a.systemApp?'SYS':'USER'}</span></td><td style="color:var(--muted)">${a.installSource||'N/A'}</td></tr>`).join('')}</tbody></table>`;
     }
 
-    function filterApps(query) {
-        const filtered = allApps.filter(app =>
-            (app.appName || '').toLowerCase()
-                .includes(query.toLowerCase()) ||
-            (app.packageName || '').toLowerCase()
-                .includes(query.toLowerCase())
-        );
-        renderApps(filtered);
+    function filterApps(q) {
+        renderApps(allApps.filter(a =>
+            (a.appName||'').toLowerCase().includes(q.toLowerCase()) ||
+            (a.packageName||'').toLowerCase().includes(q.toLowerCase())
+        ));
     }
 
-    function closeDetail() {
-        document.getElementById('detailPanel')
-            .classList.remove('active');
-    }
-    function closeApps() {
-        document.getElementById('appsPanel')
-            .classList.remove('active');
+    function closeOv(id) { document.getElementById(id).classList.remove('on'); }
+    function ovClose(e, id) { if (e.target.id === id) closeOv(id); }
+
+    function generateQR() {
+        const data = JSON.stringify({
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.sujan.mdm/.MyDeviceAdminReceiver",
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": document.getElementById('qrApkUrl').value,
+            "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
+            "android.app.extra.PROVISIONING_WIFI_SSID": document.getElementById('qrWifi').value,
+            "android.app.extra.PROVISIONING_WIFI_PASSWORD": document.getElementById('qrWifiPass').value,
+            "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": { "enrollment_token": document.getElementById('qrToken').value }
+        }, null, 2);
+        document.getElementById('qrPlaceholder').style.display = 'none';
+        document.getElementById('qrResult').style.display      = 'block';
+        document.getElementById('qrContent').textContent       = data;
+        document.getElementById('qrCode').innerHTML            = '';
+        qrInst = null;
+        qrInst = new QRCode(document.getElementById('qrCode'), { text:data, width:180, height:180, colorDark:'#000000', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M });
     }
 
-    loadDashboard();
+    loadStats();
+    renderCards('dashCards');
 </script>
 </body>
 </html>
