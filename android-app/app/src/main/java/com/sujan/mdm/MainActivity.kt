@@ -117,8 +117,10 @@ class MainActivity : AppCompatActivity() {
                         Server    : Connected ✅
                     """.trimIndent()
                 } else {
-                    tvStatus.text     = "🔴 Status: Enrollment Failed"
-                    tvSyncStatus.text = "❌ Error: ${response.code()} - ${response.message()}"
+                    tvStatus.text = "🔴 Status: Enrollment Failed"
+                    val errorMsg = response.errorBody()?.string()
+                        ?: "Unknown error"
+                    tvSyncStatus.text = "❌ $errorMsg"
                 }
             } catch (e: Exception) {
                 tvStatus.text     = "🔴 Status: Connection Error"

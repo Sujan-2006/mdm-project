@@ -171,6 +171,7 @@
         .tbadge { padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; }
         .tbadge-sys { background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); color:var(--orange); }
         .tbadge-usr { background:rgba(79,142,247,.1); border:1px solid rgba(79,142,247,.3); color:var(--accent); }
+        .tbadge-red { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:var(--red); }
 
         /* QR */
         .qr-wrap { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
@@ -198,10 +199,38 @@
         .steps-list li:last-child { border-bottom:none; }
         .step-n { width:22px; height:22px; background:rgba(79,142,247,.1); border:1px solid rgba(79,142,247,.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--accent); flex-shrink:0; }
 
+        /* token form */
+        .token-form-card {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; padding:24px; margin-bottom:24px;
+        }
+        .token-form-title { font-size:13px; font-weight:700; margin-bottom:16px; }
+        .token-form-grid {
+            display:grid; grid-template-columns:1fr 1fr 1fr;
+            gap:12px; margin-bottom:16px;
+        }
+        .token-create-btn {
+            background:linear-gradient(135deg,var(--green),#0ea65f);
+            border:none; border-radius:8px; padding:10px 24px;
+            color:white; font-size:13px; font-family:'Syne',sans-serif;
+            font-weight:700; cursor:pointer; transition:opacity .15s;
+        }
+        .token-create-btn:hover { opacity:.9; }
+        .tbl-action-btn {
+            padding:4px 10px; border:1px solid var(--border);
+            border-radius:6px; background:transparent;
+            color:var(--muted); cursor:pointer;
+            font-size:10px; font-family:'Syne',sans-serif;
+            font-weight:600; transition:all .15s;
+        }
+        .tbl-action-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .tbl-action-btn.del:hover { border-color:var(--red); color:var(--red); }
+
         /* states */
         .st-loading { text-align:center; padding:48px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px; }
         .st-empty   { text-align:center; padding:48px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px; }
         .st-err { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); border-radius:8px; padding:12px 16px; color:var(--red); font-size:12px; font-family:'JetBrains Mono',monospace; margin-bottom:16px; }
+        .st-ok  { background:rgba(16,217,126,.08); border:1px solid rgba(16,217,126,.2); border-radius:8px; padding:12px 16px; color:var(--green); font-size:12px; font-family:'JetBrains Mono',monospace; margin-bottom:16px; }
     </style>
 </head>
 <body>
@@ -222,6 +251,9 @@
         <div class="nav-label">Management</div>
         <div class="nav-item" onclick="showPage('devices',this)">
             <span class="ico">📱</span> Devices
+        </div>
+        <div class="nav-item" onclick="showPage('tokens',this)">
+            <span class="ico">🔑</span> Tokens
         </div>
         <div class="nav-item" onclick="showPage('qr',this)">
             <span class="ico">📷</span> QR Enrollment
@@ -269,6 +301,43 @@
         <div class="page" id="page-devices">
             <div class="sec-hdr">All Enrolled Devices</div>
             <div id="allCards"><div class="st-loading">⟳ Loading devices...</div></div>
+        </div>
+
+        <!-- Tokens Page -->
+        <div class="page" id="page-tokens">
+            <div class="sec-hdr" style="margin-bottom:20px">Enrollment Token Management</div>
+
+            <!-- Create Token Form -->
+            <div class="token-form-card">
+                <div class="token-form-title">➕ Create New Token</div>
+                <div id="tokenMsg"></div>
+                <div class="token-form-grid">
+                    <div>
+                        <label class="flbl">Token Label *</label>
+                        <input class="finp" type="text" id="newTokenLabel"
+                               placeholder="e.g. Lab Room 1">
+                    </div>
+                    <div>
+                        <label class="flbl">Custom Token (optional)</label>
+                        <input class="finp" type="text" id="newTokenValue"
+                               placeholder="Leave empty = auto generate">
+                    </div>
+                    <div>
+                        <label class="flbl">Max Uses</label>
+                        <input class="finp" type="number" id="newTokenMaxUses"
+                               value="1" min="1">
+                    </div>
+                </div>
+                <button class="token-create-btn" onclick="createToken()">
+                    + Create Token
+                </button>
+            </div>
+
+            <!-- Tokens List -->
+            <div class="sec-hdr">All Tokens</div>
+            <div id="tokensList">
+                <div class="st-loading">⟳ Loading tokens...</div>
+            </div>
         </div>
 
         <!-- QR Page -->
@@ -357,21 +426,31 @@
     let qrInst  = null;
 
     setInterval(() => {
-        document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+        document.getElementById('clock').textContent =
+            new Date().toLocaleTimeString();
     }, 1000);
 
     function showPage(name, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p =>
+            p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n =>
+            n.classList.remove('active'));
         document.getElementById('page-' + name).classList.add('active');
         el.classList.add('active');
-        const t = {dashboard:'Dashboard', devices:'All Devices', qr:'QR Enrollment'};
+        const t = {
+            dashboard: 'Dashboard',
+            devices:   'All Devices',
+            tokens:    'Token Management',
+            qr:        'QR Enrollment'
+        };
         document.getElementById('pageTitle').textContent = t[name];
         if (name === 'devices') renderCards('allCards');
+        if (name === 'tokens')  loadTokens();
     }
 
     function refresh() { loadStats(); renderCards('dashCards'); }
 
+    /* ── Stats ── */
     async function loadStats() {
         try {
             const res  = await fetch(`${API}/api/stats`);
@@ -382,13 +461,17 @@
         } catch(e) { console.error(e); }
     }
 
+    /* ── Device Cards ── */
     async function renderCards(cid) {
         const c = document.getElementById(cid);
         c.innerHTML = '<div class="st-loading">⟳ Loading devices...</div>';
         try {
             const res     = await fetch(`${API}/api/devices`);
             const devices = await res.json();
-            if (!devices.length) { c.innerHTML = '<div class="st-empty">No devices enrolled yet</div>'; return; }
+            if (!devices.length) {
+                c.innerHTML = '<div class="st-empty">No devices enrolled yet</div>';
+                return;
+            }
             c.innerHTML = `<div class="cards-grid">${devices.map(d => `
             <div class="dcard">
                 <div class="dcard-head">
@@ -396,78 +479,301 @@
                     <span class="badge-ok">● ENROLLED</span>
                 </div>
                 <div class="dcard-id">ID: <span>${d.deviceId.substring(0,20)}...</span></div>
-                <div class="dcard-meta">Token: ${d.enrollmentToken}<br>Since: ${new Date(d.enrolledAt).toLocaleDateString()}</div>
+                <div class="dcard-meta">
+                    Token: ${d.enrollmentToken}<br>
+                    Since: ${new Date(d.enrolledAt).toLocaleDateString()}
+                </div>
                 <div class="dcard-btns">
-                    <button class="dcard-btn" onclick="viewInfo('${d.deviceId}')">📋 Device Info</button>
-                    <button class="dcard-btn v2" onclick="viewApps('${d.deviceId}')">📦 App Inventory</button>
+                    <button class="dcard-btn"
+                        onclick="viewInfo('${d.deviceId}')">
+                        📋 Device Info
+                    </button>
+                    <button class="dcard-btn v2"
+                        onclick="viewApps('${d.deviceId}')">
+                        📦 App Inventory
+                    </button>
                 </div>
             </div>`).join('')}</div>`;
-        } catch(e) { c.innerHTML = '<div class="st-err">❌ Failed to load devices</div>'; }
+        } catch(e) {
+            c.innerHTML = '<div class="st-err">❌ Failed to load devices</div>';
+        }
     }
 
+    /* ── Device Info Modal ── */
     async function viewInfo(deviceId) {
-        document.getElementById('infoTitle').textContent = '📋 ' + deviceId.substring(0,22) + '...';
-        document.getElementById('infoGrid').innerHTML = '<div class="st-loading">⟳ Loading...</div>';
+        document.getElementById('infoTitle').textContent =
+            '📋 ' + deviceId.substring(0,22) + '...';
+        document.getElementById('infoGrid').innerHTML =
+            '<div class="st-loading">⟳ Loading...</div>';
         document.getElementById('ov-info').classList.add('on');
         try {
-            const res  = await fetch(`${API}/api/devices/${deviceId}/info`);
-            if (!res.ok) { document.getElementById('infoGrid').innerHTML = '<div class="st-err">❌ Error loading device info</div>'; return; }
+            const res = await fetch(`${API}/api/devices/${deviceId}/info`);
+            if (!res.ok) {
+                document.getElementById('infoGrid').innerHTML =
+                    '<div class="st-err">❌ Error loading device info</div>';
+                return;
+            }
             const info = await res.json();
             if (!info || Object.keys(info).length === 0) {
-                document.getElementById('infoGrid').innerHTML = '<div class="st-err">⚠ No device info yet. Open app → Collect Device Info</div>'; return;
+                document.getElementById('infoGrid').innerHTML =
+                    '<div class="st-err">⚠ No device info yet.' +
+                    ' Open app → Collect Device Info</div>';
+                return;
             }
-            const fields = [['Device ID',info.deviceId],['Model',info.model],['Manufacturer',info.manufacturer],['Android',info.osVersion],['SDK',info.sdkVersion],['UUID',info.uuid],['Serial',info.serial]];
-            document.getElementById('infoGrid').innerHTML = `<div class="info-grid">${fields.map(([k,v]) => `<div class="info-item"><div class="info-k">${k}</div><div class="info-v">${v||'N/A'}</div></div>`).join('')}</div>`;
-        } catch(e) { document.getElementById('infoGrid').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
+            const fields = [
+                ['Device ID',    info.deviceId],
+                ['Model',        info.model],
+                ['Manufacturer', info.manufacturer],
+                ['Android',      info.osVersion],
+                ['SDK',          info.sdkVersion],
+                ['UUID',         info.uuid],
+                ['Serial',       info.serial]
+            ];
+            document.getElementById('infoGrid').innerHTML =
+                `<div class="info-grid">${fields.map(([k,v]) =>
+                    `<div class="info-item">
+                    <div class="info-k">${k}</div>
+                    <div class="info-v">${v || 'N/A'}</div>
+                </div>`).join('')}</div>`;
+        } catch(e) {
+            document.getElementById('infoGrid').innerHTML =
+                `<div class="st-err">❌ ${e.message}</div>`;
+        }
     }
 
+    /* ── Apps Modal ── */
     async function viewApps(deviceId) {
-        document.getElementById('appsTitle').textContent = '📦 ' + deviceId.substring(0,22) + '...';
-        document.getElementById('appsContent').innerHTML = '<div class="st-loading">⟳ Loading apps...</div>';
+        document.getElementById('appsTitle').textContent =
+            '📦 ' + deviceId.substring(0,22) + '...';
+        document.getElementById('appsContent').innerHTML =
+            '<div class="st-loading">⟳ Loading apps...</div>';
         document.getElementById('appPills').innerHTML = '';
         document.getElementById('ov-apps').classList.add('on');
         try {
             const res = await fetch(`${API}/api/devices/${deviceId}/apps`);
             allApps   = await res.json();
-            if (!allApps.length) { document.getElementById('appsContent').innerHTML = '<div class="st-err">⚠ No apps found. Open app → Sync App Inventory</div>'; return; }
+            if (!allApps.length) {
+                document.getElementById('appsContent').innerHTML =
+                    '<div class="st-err">⚠ No apps found.' +
+                    ' Open app → Sync App Inventory</div>';
+                return;
+            }
             renderApps(allApps);
-        } catch(e) { document.getElementById('appsContent').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
+        } catch(e) {
+            document.getElementById('appsContent').innerHTML =
+                `<div class="st-err">❌ ${e.message}</div>`;
+        }
     }
 
     function renderApps(apps) {
         const sys  = apps.filter(a => a.systemApp).length;
         const user = apps.filter(a => !a.systemApp).length;
-        document.getElementById('appPills').innerHTML = `<div class="pill">Total <span>${apps.length}</span></div><div class="pill">System <span>${sys}</span></div><div class="pill">User <span>${user}</span></div>`;
-        document.getElementById('appsContent').innerHTML = `<table class="tbl"><thead><tr><th>App Name</th><th>Package</th><th>Version</th><th>Type</th><th>Source</th></tr></thead><tbody>${apps.map(a=>`<tr><td>${a.appName||'N/A'}</td><td style="color:var(--muted)">${a.packageName||'N/A'}</td><td>${a.versionName||'N/A'}</td><td><span class="tbadge ${a.systemApp?'tbadge-sys':'tbadge-usr'}">${a.systemApp?'SYS':'USER'}</span></td><td style="color:var(--muted)">${a.installSource||'N/A'}</td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('appPills').innerHTML =
+            `<div class="pill">Total <span>${apps.length}</span></div>
+         <div class="pill">System <span>${sys}</span></div>
+         <div class="pill">User <span>${user}</span></div>`;
+        document.getElementById('appsContent').innerHTML =
+            `<table class="tbl">
+            <thead><tr>
+                <th>App Name</th><th>Package</th>
+                <th>Version</th><th>Type</th><th>Source</th>
+            </tr></thead>
+            <tbody>${apps.map(a => `
+                <tr>
+                    <td>${a.appName || 'N/A'}</td>
+                    <td style="color:var(--muted)">
+                        ${a.packageName || 'N/A'}
+                    </td>
+                    <td>${a.versionName || 'N/A'}</td>
+                    <td>
+                        <span class="tbadge ${a.systemApp ?
+                'tbadge-sys' : 'tbadge-usr'}">
+                            ${a.systemApp ? 'SYS' : 'USER'}
+                        </span>
+                    </td>
+                    <td style="color:var(--muted)">
+                        ${a.installSource || 'N/A'}
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
     }
 
     function filterApps(q) {
         renderApps(allApps.filter(a =>
-            (a.appName||'').toLowerCase().includes(q.toLowerCase()) ||
-            (a.packageName||'').toLowerCase().includes(q.toLowerCase())
+            (a.appName    || '').toLowerCase().includes(q.toLowerCase()) ||
+            (a.packageName|| '').toLowerCase().includes(q.toLowerCase())
         ));
     }
 
-    function closeOv(id) { document.getElementById(id).classList.remove('on'); }
-    function ovClose(e, id) { if (e.target.id === id) closeOv(id); }
+    /* ── Token Management ── */
+    async function loadTokens() {
+        const c = document.getElementById('tokensList');
+        c.innerHTML = '<div class="st-loading">⟳ Loading tokens...</div>';
+        try {
+            const res    = await fetch(`${API}/api/tokens`);
+            const tokens = await res.json();
 
+            if (!tokens.length) {
+                c.innerHTML =
+                    '<div class="st-empty">No tokens yet.' +
+                    ' Create one above!</div>';
+                return;
+            }
+
+            c.innerHTML = `
+        <table class="tbl">
+            <thead><tr>
+                <th>Token</th>
+                <th>Label</th>
+                <th>Status</th>
+                <th>Uses</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr></thead>
+            <tbody>
+            ${tokens.map(t => `
+                <tr>
+                    <td style="color:var(--accent);
+                        font-family:'JetBrains Mono',monospace;
+                        font-weight:600;">
+                        ${t.token}
+                    </td>
+                    <td>${t.label || 'N/A'}</td>
+                    <td>
+                        <span class="tbadge ${t.active ?
+                'tbadge-usr' : 'tbadge-red'}">
+                            ${t.active ? 'ACTIVE' : 'DISABLED'}
+                        </span>
+                    </td>
+                    <td style="font-family:'JetBrains Mono',monospace;">
+                        <span style="color:${t.currentUses >= t.maxUses ?
+                'var(--red)' : 'var(--green)'}">
+                            ${t.currentUses}
+                        </span>
+                        / ${t.maxUses}
+                    </td>
+                    <td style="color:var(--muted);
+                        font-family:'JetBrains Mono',monospace;">
+                        ${t.createdAt ?
+                new Date(t.createdAt).toLocaleDateString()
+                : 'N/A'}
+                    </td>
+                    <td style="display:flex;gap:6px;">
+                        <button class="tbl-action-btn"
+                            onclick="toggleToken(${t.id})">
+                            ${t.active ? '⏸ Disable' : '▶ Enable'}
+                        </button>
+                        <button class="tbl-action-btn del"
+                            onclick="deleteToken(${t.id})">
+                            🗑 Delete
+                        </button>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+        } catch(e) {
+            c.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+        }
+    }
+
+    async function createToken() {
+        const label   = document.getElementById('newTokenLabel').value.trim();
+        const token   = document.getElementById('newTokenValue').value.trim();
+        const maxUses = document.getElementById('newTokenMaxUses').value;
+        const msgEl   = document.getElementById('tokenMsg');
+
+        if (!label) {
+            msgEl.innerHTML =
+                '<div class="st-err">⚠ Please enter a token label!</div>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/tokens`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token:   token || null,
+                    label:   label,
+                    maxUses: parseInt(maxUses)
+                })
+            });
+
+            if (res.ok) {
+                const created = await res.json();
+                msgEl.innerHTML =
+                    `<div class="st-ok">✅ Token created: ${created.token}</div>`;
+                document.getElementById('newTokenLabel').value   = '';
+                document.getElementById('newTokenValue').value   = '';
+                document.getElementById('newTokenMaxUses').value = '1';
+                loadTokens();
+                setTimeout(() => msgEl.innerHTML = '', 3000);
+            } else {
+                const err = await res.text();
+                msgEl.innerHTML = `<div class="st-err">❌ ${err}</div>`;
+            }
+        } catch(e) {
+            msgEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+        }
+    }
+
+    async function toggleToken(id) {
+        try {
+            await fetch(`${API}/api/tokens/${id}/toggle`,
+                { method: 'PUT' });
+            loadTokens();
+        } catch(e) { alert('Failed to toggle token'); }
+    }
+
+    async function deleteToken(id) {
+        if (!confirm('Delete this token? This cannot be undone!')) return;
+        try {
+            await fetch(`${API}/api/tokens/${id}`,
+                { method: 'DELETE' });
+            loadTokens();
+        } catch(e) { alert('Failed to delete token'); }
+    }
+
+    /* ── Modal helpers ── */
+    function closeOv(id) {
+        document.getElementById(id).classList.remove('on');
+    }
+    function ovClose(e, id) {
+        if (e.target.id === id) closeOv(id);
+    }
+
+    /* ── QR ── */
     function generateQR() {
         const data = JSON.stringify({
-            "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.sujan.mdm/.MyDeviceAdminReceiver",
-            "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": document.getElementById('qrApkUrl').value,
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME":
+                "com.sujan.mdm/.MyDeviceAdminReceiver",
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION":
+            document.getElementById('qrApkUrl').value,
             "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
-            "android.app.extra.PROVISIONING_WIFI_SSID": document.getElementById('qrWifi').value,
-            "android.app.extra.PROVISIONING_WIFI_PASSWORD": document.getElementById('qrWifiPass').value,
-            "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": { "enrollment_token": document.getElementById('qrToken').value }
+            "android.app.extra.PROVISIONING_WIFI_SSID":
+            document.getElementById('qrWifi').value,
+            "android.app.extra.PROVISIONING_WIFI_PASSWORD":
+            document.getElementById('qrWifiPass').value,
+            "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
+                "enrollment_token":
+                document.getElementById('qrToken').value
+            }
         }, null, 2);
+
         document.getElementById('qrPlaceholder').style.display = 'none';
         document.getElementById('qrResult').style.display      = 'block';
         document.getElementById('qrContent').textContent       = data;
         document.getElementById('qrCode').innerHTML            = '';
         qrInst = null;
-        qrInst = new QRCode(document.getElementById('qrCode'), { text:data, width:180, height:180, colorDark:'#000000', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M });
+        qrInst = new QRCode(document.getElementById('qrCode'), {
+            text: data, width: 180, height: 180,
+            colorDark: '#000000', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
     }
 
+    /* ── Init ── */
     loadStats();
     renderCards('dashCards');
 </script>
