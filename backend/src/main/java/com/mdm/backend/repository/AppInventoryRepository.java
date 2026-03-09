@@ -9,4 +9,5 @@ import java.util.List;
 public interface AppInventoryRepository
         extends JpaRepository<AppInventory, Long> {
     List<AppInventory> findByDeviceId(String deviceId);
+    void deleteByDeviceId(String deviceId);
 }

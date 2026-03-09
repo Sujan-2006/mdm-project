@@ -101,6 +101,10 @@ public class MdmController {
     @PostMapping("/app-inventory")
     public ResponseEntity<String> saveAppInventory(
             @RequestBody List<AppInventory> apps) {
+        if (apps.isEmpty())
+            return ResponseEntity.ok("No apps");
+        String deviceId = apps.get(0).getDeviceId();
+        appInventoryRepository.deleteByDeviceId(deviceId);
         appInventoryRepository.saveAll(apps);
         return ResponseEntity.ok("App inventory saved");
     }
