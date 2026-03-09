@@ -57,6 +57,9 @@ class MainActivity : AppCompatActivity() {
         btnSyncApps       = findViewById(R.id.btnSyncApps)
         etEnrollmentToken = findViewById(R.id.etEnrollmentToken)
 
+        // Check enrollment status on startup
+        checkEnrollmentStatus()
+
         // Check Device Owner status
         checkDeviceOwnerStatus()
 
@@ -93,12 +96,27 @@ class MainActivity : AppCompatActivity() {
         scheduleBackgroundSync()
     }
 
+    private fun checkEnrollmentStatus() {
+        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+        val isEnrolled = prefs.getBoolean("is_enrolled", false)
+        if (isEnrolled) {
+            tvStatus.text = "🟢 Status: Enrolled ✅"
+            tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
+            btnEnroll.isEnabled = false
+            btnEnroll.alpha = 0.5f
+            etEnrollmentToken.isEnabled = false
+            etEnrollmentToken.hint = "Already enrolled"
+        }
+    }
+
     private fun checkDeviceOwnerStatus() {
         val isDeviceOwner = devicePolicyManager.isDeviceOwnerApp(packageName)
+        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+        val isEnrolled = prefs.getBoolean("is_enrolled", false)
         if (isDeviceOwner) {
             tvStatus.text = "🟢 Status: Device Owner Active"
             tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
-        } else {
+        } else if (!isEnrolled) {
             tvStatus.text = "⚪ Status: Not Enrolled"
         }
     }
@@ -114,9 +132,18 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 if (response.isSuccessful) {
+                    // Save enrolled state locally
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                         .edit().putBoolean("is_enrolled", true).apply()
+
+                    // Update UI
                     tvStatus.text = "🟢 Status: Enrolled ✅"
+                    tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
+                    btnEnroll.isEnabled = false
+                    btnEnroll.alpha = 0.5f
+                    etEnrollmentToken.isEnabled = false
+                    etEnrollmentToken.hint = "Already enrolled"
+
                     tvSyncStatus.text = """
                         ✅ Device enrolled successfully!
                         
@@ -125,10 +152,18 @@ class MainActivity : AppCompatActivity() {
                         Server    : Connected ✅
                     """.trimIndent()
                 } else {
-                    tvStatus.text = "🔴 Status: Enrollment Failed"
                     val errorMsg = response.errorBody()?.string()
                         ?: "Unknown error"
-                    tvSyncStatus.text = "❌ $errorMsg"
+                    // If already enrolled on server, save locally too
+                    if (errorMsg.contains("already enrolled")) {
+                        getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                            .edit().putBoolean("is_enrolled", true).apply()
+                        checkEnrollmentStatus()
+                        tvSyncStatus.text = "✅ Device already enrolled!"
+                    } else {
+                        tvStatus.text = "🔴 Status: Enrollment Failed"
+                        tvSyncStatus.text = "❌ $errorMsg"
+                    }
                 }
             } catch (e: Exception) {
                 tvStatus.text     = "🔴 Status: Connection Error"
