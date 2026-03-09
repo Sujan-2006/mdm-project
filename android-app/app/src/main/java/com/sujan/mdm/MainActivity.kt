@@ -62,6 +62,12 @@ class MainActivity : AppCompatActivity() {
 
         // Enroll button
         btnEnroll.setOnClickListener {
+            val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+            val alreadyEnrolled = prefs.getBoolean("is_enrolled", false)
+            if (alreadyEnrolled) {
+                tvSyncStatus.text = "✅ Device already enrolled!"
+                return@setOnClickListener
+            }
             val token = etEnrollmentToken.text.toString().trim()
             if (token.isEmpty()) {
                 tvSyncStatus.text = "Please enter enrollment token!"
@@ -108,6 +114,8 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 if (response.isSuccessful) {
+                    getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                        .edit().putBoolean("is_enrolled", true).apply()
                     tvStatus.text = "🟢 Status: Enrolled ✅"
                     tvSyncStatus.text = """
                         ✅ Device enrolled successfully!

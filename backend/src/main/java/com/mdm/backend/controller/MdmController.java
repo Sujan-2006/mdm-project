@@ -35,6 +35,13 @@ public class MdmController {
     public ResponseEntity<String> enrollDevice(
             @RequestBody EnrolledDevice device) {
         try {
+            // Check if device already enrolled
+            if (enrolledDeviceRepository
+                    .existsByDeviceId(device.getDeviceId())) {
+                return ResponseEntity
+                        .ok("Device already enrolled");
+            }
+
             // Find token in database
             Optional<EnrollmentToken> tokenOpt =
                     enrollmentTokenRepository
