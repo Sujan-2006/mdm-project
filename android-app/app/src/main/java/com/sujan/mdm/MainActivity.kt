@@ -81,6 +81,12 @@ class MainActivity : AppCompatActivity() {
 
         // Collect info button
         btnCollectInfo.setOnClickListener {
+            val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+            val alreadyCollected = prefs.getBoolean("info_collected", false)
+            if (alreadyCollected) {
+                tvSyncStatus.text = "✅ Device info already sent!"
+                return@setOnClickListener
+            }
             collectDeviceInfo()
         }
 
@@ -99,6 +105,8 @@ class MainActivity : AppCompatActivity() {
     private fun checkEnrollmentStatus() {
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
         val isEnrolled = prefs.getBoolean("is_enrolled", false)
+        val isInfoCollected = prefs.getBoolean("info_collected", false)
+
         if (isEnrolled) {
             tvStatus.text = "🟢 Status: Enrolled ✅"
             tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
@@ -106,6 +114,11 @@ class MainActivity : AppCompatActivity() {
             btnEnroll.alpha = 0.5f
             etEnrollmentToken.isEnabled = false
             etEnrollmentToken.hint = "Already enrolled"
+        }
+
+        if (isInfoCollected) {
+            btnCollectInfo.isEnabled = false
+            btnCollectInfo.alpha = 0.5f
         }
     }
 
@@ -154,7 +167,6 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     val errorMsg = response.errorBody()?.string()
                         ?: "Unknown error"
-                    // If already enrolled on server, save locally too
                     if (errorMsg.contains("already enrolled")) {
                         getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                             .edit().putBoolean("is_enrolled", true).apply()
@@ -183,7 +195,7 @@ class MainActivity : AppCompatActivity() {
                     manufacturer = Build.MANUFACTURER,
                     osVersion    = Build.VERSION.RELEASE,
                     sdkVersion   = Build.VERSION.SDK_INT.toString(),
-                    uuid         = deviceId,
+                    uuid         = "RESTRICTED",
                     serial       = "RESTRICTED"
                 )
 
@@ -204,6 +216,10 @@ class MainActivity : AppCompatActivity() {
                     .sendDeviceInfo(deviceInfo)
 
                 if (response.isSuccessful) {
+                    getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                        .edit().putBoolean("info_collected", true).apply()
+                    btnCollectInfo.isEnabled = false
+                    btnCollectInfo.alpha = 0.5f
                     tvSyncStatus.text =
                         "✅ Device info sent to server successfully!"
                 } else {
