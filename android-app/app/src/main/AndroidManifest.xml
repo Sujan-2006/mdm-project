@@ -19,6 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MDMApp"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -47,6 +48,18 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".AppChangeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED"/>
+                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
+                <action android:name="android.intent.action.PACKAGE_REPLACED"/>
+                <data android:scheme="package"/>
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
