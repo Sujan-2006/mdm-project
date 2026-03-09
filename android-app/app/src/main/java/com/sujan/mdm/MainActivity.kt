@@ -280,14 +280,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun scheduleBackgroundSync() {
         val syncRequest = androidx.work.PeriodicWorkRequestBuilder<SyncWorker>(
-            1, java.util.concurrent.TimeUnit.HOURS
+            15, java.util.concurrent.TimeUnit.MINUTES
         ).setConstraints(
             androidx.work.Constraints.Builder()
                 .setRequiredNetworkType(
                     androidx.work.NetworkType.CONNECTED)
                 .build()
         ).setInitialDelay(
-            1, java.util.concurrent.TimeUnit.HOURS
+            15, java.util.concurrent.TimeUnit.MINUTES
         ).build()
 
         androidx.work.WorkManager.getInstance(this)
