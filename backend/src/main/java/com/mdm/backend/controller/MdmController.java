@@ -79,7 +79,8 @@ public class MdmController {
                         .body("Enrollment token has reached maximum uses!");
             }
 
-            // All checks passed → enroll device
+            // Set adminId from token so device belongs to same admin
+            device.setAdminId(token.getAdminId());
             device.setEnrolledAt(LocalDateTime.now());
             enrolledDeviceRepository.save(device);
 
@@ -116,11 +117,12 @@ public class MdmController {
         return ResponseEntity.ok("App inventory saved");
     }
 
-    // ── GET endpoints for dashboard ──
+    // ── GET endpoints for dashboard (filtered by adminId) ──
     @GetMapping("/api/devices")
-    public ResponseEntity<List<EnrolledDevice>> getAllDevices() {
+    public ResponseEntity<List<EnrolledDevice>> getAllDevices(
+            @RequestParam Long adminId) {
         return ResponseEntity.ok(
-                enrolledDeviceRepository.findAll());
+                enrolledDeviceRepository.findByAdminId(adminId));
     }
 
     @GetMapping("/api/devices/{deviceId}/info")
@@ -144,20 +146,29 @@ public class MdmController {
     }
 
     @GetMapping("/api/stats")
-    public ResponseEntity<?> getStats() {
-        long totalDevices = enrolledDeviceRepository.count();
-        long totalApps    = appInventoryRepository.count();
+    public ResponseEntity<?> getStats(
+            @RequestParam Long adminId) {
+        long totalDevices = enrolledDeviceRepository
+                .countByAdminId(adminId);
+        long totalApps = appInventoryRepository
+                .countByDeviceIdIn(
+                        enrolledDeviceRepository
+                                .findByAdminId(adminId)
+                                .stream()
+                                .map(EnrolledDevice::getDeviceId)
+                                .toList());
         Map<String, Long> stats = new HashMap<>();
         stats.put("totalDevices", totalDevices);
-        stats.put("totalApps", totalApps);
+        stats.put("totalApps",    totalApps);
         return ResponseEntity.ok(stats);
     }
 
-    // ── Token management endpoints ──
+    // ── Token management endpoints (filtered by adminId) ──
     @GetMapping("/api/tokens")
-    public ResponseEntity<List<EnrollmentToken>> getAllTokens() {
+    public ResponseEntity<List<EnrollmentToken>> getAllTokens(
+            @RequestParam Long adminId) {
         return ResponseEntity.ok(
-                enrollmentTokenRepository.findAll());
+                enrollmentTokenRepository.findByAdminId(adminId));
     }
 
     @PostMapping("/api/tokens")

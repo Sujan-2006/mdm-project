@@ -7,19 +7,25 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "admins")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EnrolledDevice {
+public class Admin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String deviceId;
-    private String enrollmentToken;
-    private LocalDateTime enrolledAt = LocalDateTime.now();
+    @Column(unique = true, nullable = false)
+    private String username;
 
-    @Column(name = "admin_id")
-    private Long adminId;
+    @Column(nullable = false)
+    private String password;
+
+    @Column(unique = true)
+    private String email;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

@@ -37,4 +37,7 @@ public class EnrollmentToken {
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+
+    @Column(name = "admin_id")
+    private Long adminId;
 }
