@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo
 import android.os.Build
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AppChangeReceiver : BroadcastReceiver() {
@@ -23,7 +24,10 @@ class AppChangeReceiver : BroadcastReceiver() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val pm = context.packageManager
+                    // Small delay to let the package manager settle
+                    delay(2000)
+
+                    val pm       = context.packageManager
                     val packages = pm.getInstalledPackages(0)
 
                     val apps = packages.mapNotNull { pkg ->
@@ -51,7 +55,21 @@ class AppChangeReceiver : BroadcastReceiver() {
                         )
                     }
 
+                    val totalApps  = apps.size
+                    val systemApps = apps.count { it.isSystemApp }
+                    val userApps   = apps.count { !it.isSystemApp }
+
+                    // ── Save updated counts locally ──
+                    // So when user opens the app it shows correct number!
+                    prefs.edit()
+                        .putInt("last_total_apps",  totalApps)
+                        .putInt("last_system_apps", systemApps)
+                        .putInt("last_user_apps",   userApps)
+                        .apply()
+
+                    // ── Sync updated list to server ──
                     RetrofitClient.instance.sendApps(apps)
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
