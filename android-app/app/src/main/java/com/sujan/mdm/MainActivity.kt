@@ -144,6 +144,11 @@ class MainActivity : AppCompatActivity() {
             btnCollectInfo.isEnabled = false
             btnCollectInfo.alpha = 0.5f
         }
+        if (isInfoCollected) {
+            btnCollectInfo.isEnabled = false
+            btnCollectInfo.alpha = 0.5f
+            tvDeviceInfo.text = "✅ Device Info Already Collected!"
+        }
     }
 
     private fun checkDeviceOwnerStatus() {
@@ -244,6 +249,15 @@ class MainActivity : AppCompatActivity() {
                         .edit().putBoolean("info_collected", true).apply()
                     btnCollectInfo.isEnabled = false
                     btnCollectInfo.alpha = 0.5f
+                    tvDeviceInfo.text = """
+        ✅ Device Info Collected!
+        
+        📌 Model        : ${deviceInfo.model}
+        🏭 Manufacturer : ${deviceInfo.manufacturer}
+        🤖 Android      : ${deviceInfo.osVersion}
+        🔧 SDK          : ${deviceInfo.sdkVersion}
+        🔑 Serial       : ${deviceInfo.serial}
+    """.trimIndent()
                     tvSyncStatus.text =
                         "✅ Device info sent to server successfully!"
                 } else {
