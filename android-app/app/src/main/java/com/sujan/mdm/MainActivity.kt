@@ -63,6 +63,9 @@ class MainActivity : AppCompatActivity() {
         // Check Device Owner status
         checkDeviceOwnerStatus()
 
+        // ── Restore last saved app counts on startup ──
+        restoreAppCounts()
+
         // Enroll button
         btnEnroll.setOnClickListener {
             val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
@@ -100,6 +103,27 @@ class MainActivity : AppCompatActivity() {
 
         // Schedule background sync
         scheduleBackgroundSync()
+    }
+
+    // ── Restore last saved app counts from SharedPreferences ──
+    private fun restoreAppCounts() {
+        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+        val savedTotal  = prefs.getInt("last_total_apps",  0)
+        val savedSystem = prefs.getInt("last_system_apps", 0)
+        val savedUser   = prefs.getInt("last_user_apps",   0)
+
+        if (savedTotal > 0) {
+            tvTotalApps.text  = savedTotal.toString()
+            tvSystemApps.text = savedSystem.toString()
+            tvUserApps.text   = savedUser.toString()
+            tvSyncStatus.text = """
+                ✅ App inventory synced!
+                
+                📦 Total  : $savedTotal
+                ⚙️ System : $savedSystem
+                👤 User   : $savedUser
+            """.trimIndent()
+        }
     }
 
     private fun checkEnrollmentStatus() {
@@ -272,9 +296,18 @@ class MainActivity : AppCompatActivity() {
                 val systemApps = apps.count { it.isSystemApp }
                 val userApps   = apps.count { !it.isSystemApp }
 
+                // ── Update UI ──
                 tvTotalApps.text  = totalApps.toString()
                 tvSystemApps.text = systemApps.toString()
                 tvUserApps.text   = userApps.toString()
+
+                // ── Save counts to SharedPreferences so they persist ──
+                getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putInt("last_total_apps",  totalApps)
+                    .putInt("last_system_apps", systemApps)
+                    .putInt("last_user_apps",   userApps)
+                    .apply()
 
                 val response = RetrofitClient.instance.sendApps(apps)
                 if (response.isSuccessful) {
