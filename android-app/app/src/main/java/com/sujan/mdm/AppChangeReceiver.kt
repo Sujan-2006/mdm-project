@@ -60,12 +60,15 @@ class AppChangeReceiver : BroadcastReceiver() {
                     val userApps   = apps.count { !it.isSystemApp }
 
                     // ── Save updated counts locally ──
-                    // So when user opens the app it shows correct number!
                     prefs.edit()
                         .putInt("last_total_apps",  totalApps)
                         .putInt("last_system_apps", systemApps)
                         .putInt("last_user_apps",   userApps)
                         .apply()
+
+                    // ── Tell MainActivity to refresh UI instantly ──
+                    val uiIntent = Intent("com.sujan.mdm.APP_COUNT_UPDATED")
+                    context.sendBroadcast(uiIntent)
 
                     // ── Sync updated list to server ──
                     RetrofitClient.instance.sendApps(apps)

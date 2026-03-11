@@ -94,8 +94,7 @@
                     android:id="@+id/etEnrollmentToken"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Enter enrollment token"
-                    android:text="MDM_TOKEN_2024"
+                    android:hint="Enter enrollment token here"
                     android:textSize="14sp"
                     android:padding="12dp"
                     android:background="@drawable/input_background"
@@ -114,7 +113,6 @@
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
-
 
         <!-- Device Info Card -->
         <androidx.cardview.widget.CardView

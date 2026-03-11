@@ -1,7 +1,11 @@
 package com.sujan.mdm
 
 import android.app.admin.DevicePolicyManager
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Bundle
@@ -36,6 +40,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Listens for app install/uninstall and updates UI instantly ──
+    private val appCountReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            restoreAppCounts()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -65,6 +76,10 @@ class MainActivity : AppCompatActivity() {
 
         // ── Restore last saved app counts on startup ──
         restoreAppCounts()
+
+        // ── Register receiver to listen for app install/uninstall ──
+        val filter = IntentFilter("com.sujan.mdm.APP_COUNT_UPDATED")
+        registerReceiver(appCountReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
 
         // Enroll button
         btnEnroll.setOnClickListener {
@@ -105,6 +120,12 @@ class MainActivity : AppCompatActivity() {
         scheduleBackgroundSync()
     }
 
+    // ── Unregister receiver when app is destroyed ──
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(appCountReceiver)
+    }
+
     // ── Restore last saved app counts from SharedPreferences ──
     private fun restoreAppCounts() {
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
@@ -143,10 +164,6 @@ class MainActivity : AppCompatActivity() {
         if (isInfoCollected) {
             btnCollectInfo.isEnabled = false
             btnCollectInfo.alpha = 0.5f
-        }
-        if (isInfoCollected) {
-            btnCollectInfo.isEnabled = false
-            btnCollectInfo.alpha = 0.5f
             tvDeviceInfo.text = "✅ Device Info Already Collected!"
         }
     }
@@ -174,11 +191,9 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 if (response.isSuccessful) {
-                    // Save enrolled state locally
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                         .edit().putBoolean("is_enrolled", true).apply()
 
-                    // Update UI
                     tvStatus.text = "🟢 Status: Enrolled ✅"
                     tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
                     btnEnroll.isEnabled = false
@@ -250,14 +265,14 @@ class MainActivity : AppCompatActivity() {
                     btnCollectInfo.isEnabled = false
                     btnCollectInfo.alpha = 0.5f
                     tvDeviceInfo.text = """
-        ✅ Device Info Collected!
-        
-        📌 Model        : ${deviceInfo.model}
-        🏭 Manufacturer : ${deviceInfo.manufacturer}
-        🤖 Android      : ${deviceInfo.osVersion}
-        🔧 SDK          : ${deviceInfo.sdkVersion}
-        🔑 Serial       : ${deviceInfo.serial}
-    """.trimIndent()
+                        ✅ Device Info Collected!
+                        
+                        📌 Model        : ${deviceInfo.model}
+                        🏭 Manufacturer : ${deviceInfo.manufacturer}
+                        🤖 Android      : ${deviceInfo.osVersion}
+                        🔧 SDK          : ${deviceInfo.sdkVersion}
+                        🔑 Serial       : ${deviceInfo.serial}
+                    """.trimIndent()
                     tvSyncStatus.text =
                         "✅ Device info sent to server successfully!"
                 } else {
@@ -315,7 +330,7 @@ class MainActivity : AppCompatActivity() {
                 tvSystemApps.text = systemApps.toString()
                 tvUserApps.text   = userApps.toString()
 
-                // ── Save counts to SharedPreferences so they persist ──
+                // ── Save counts so they persist ──
                 getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                     .edit()
                     .putInt("last_total_apps",  totalApps)
