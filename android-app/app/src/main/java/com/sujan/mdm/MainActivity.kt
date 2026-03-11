@@ -41,10 +41,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Listens for app install/uninstall and updates UI instantly ──
+    // FIXED - actually rescans and updates UI
     private val appCountReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            restoreAppCounts()
+            val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+            val total  = prefs.getInt("last_total_apps",  0)
+            val system = prefs.getInt("last_system_apps", 0)
+            val user   = prefs.getInt("last_user_apps",   0)
+
+            runOnUiThread {
+                tvTotalApps.text  = total.toString()
+                tvSystemApps.text = system.toString()
+                tvUserApps.text   = user.toString()
+                tvSyncStatus.text = """
+                ✅ App inventory synced!
+                
+                📦 Total  : $total
+                ⚙️ System : $system
+                👤 User   : $user
+            """.trimIndent()
+            }
         }
     }
 
