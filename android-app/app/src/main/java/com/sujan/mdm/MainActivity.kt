@@ -13,6 +13,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -77,9 +78,14 @@ class MainActivity : AppCompatActivity() {
         // ── Restore last saved app counts on startup ──
         restoreAppCounts()
 
-        // ── Register receiver to listen for app install/uninstall ──
+        // ── Register receiver using ContextCompat (works on all Android versions) ──
         val filter = IntentFilter("com.sujan.mdm.APP_COUNT_UPDATED")
-        registerReceiver(appCountReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(
+            this,
+            appCountReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         // Enroll button
         btnEnroll.setOnClickListener {
@@ -149,7 +155,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkEnrollmentStatus() {
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-        val isEnrolled = prefs.getBoolean("is_enrolled", false)
+        val isEnrolled      = prefs.getBoolean("is_enrolled",    false)
         val isInfoCollected = prefs.getBoolean("info_collected", false)
 
         if (isEnrolled) {

@@ -21,6 +21,7 @@ data class AppItem(
     val packageName: String,
     val versionName: String,
     val versionCode: Int,
+    @com.google.gson.annotations.SerializedName("isSystemApp")
     val isSystemApp: Boolean,
     val installSource: String
 )
