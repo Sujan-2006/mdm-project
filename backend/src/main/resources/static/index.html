@@ -549,10 +549,10 @@
         } catch(e) { document.getElementById('appsContent').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
     }
     function renderApps(apps) {
-        const sys = apps.filter(a => a.systemApp).length;
-        const user = apps.filter(a => !a.systemApp).length;
+        const sys = apps.filter(a => a.isSystemApp).length;
+        const user = apps.filter(a => !a.isSystemApp).length;
         document.getElementById('appPills').innerHTML = `<div class="pill">Total <span>${apps.length}</span></div><div class="pill">System <span>${sys}</span></div><div class="pill">User <span>${user}</span></div>`;
-        document.getElementById('appsContent').innerHTML = `<table class="tbl"><thead><tr><th>App Name</th><th>Package</th><th>Version</th><th>Type</th><th>Source</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.appName||'N/A'}</td><td style="color:var(--muted)">${a.packageName||'N/A'}</td><td>${a.versionName||'N/A'}</td><td><span class="tbadge ${a.systemApp?'tbadge-sys':'tbadge-usr'}">${a.systemApp?'SYS':'USER'}</span></td><td style="color:var(--muted)">${a.installSource||'N/A'}</td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('appsContent').innerHTML = `<table class="tbl"><thead><tr><th>App Name</th><th>Package</th><th>Version</th><th>Type</th><th>Source</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.appName||'N/A'}</td><td style="color:var(--muted)">${a.packageName||'N/A'}</td><td>${a.versionName||'N/A'}</td><td><span class="tbadge ${a.isSystemApp?'tbadge-sys':'tbadge-usr'}">${a.isSystemApp?'SYS':'USER'}</span></td><td style="color:var(--muted)">${a.installSource||'N/A'}</td></tr>`).join('')}</tbody></table>`;
     }
     function filterApps(q) { renderApps(allApps.filter(a => (a.appName||'').toLowerCase().includes(q.toLowerCase()) || (a.packageName||'').toLowerCase().includes(q.toLowerCase()))); }
 
