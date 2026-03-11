@@ -128,7 +128,7 @@
         .dcard-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.05);}
         .dcard-btn.v2:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(124,58,237,.05);}
 
-        /* MODAL */
+        /* DEVICE INFO MODAL */
         .overlay{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:100;backdrop-filter:blur(6px);align-items:center;justify-content:center;}
         .overlay.on{display:flex;}
         .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:90%;max-width:820px;max-height:88vh;overflow-y:auto;padding:28px;animation:up .2s ease;box-shadow:0 24px 64px var(--shadow);}
@@ -144,13 +144,68 @@
         .info-k{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
         .info-v{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;word-break:break-all;}
 
-        /* APPS */
-        .srch{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace;outline:none;margin-bottom:14px;transition:all .15s;}
-        .srch:focus{border-color:var(--accent);}
-        .srch::placeholder{color:var(--muted);}
-        .app-pills{display:flex;gap:10px;margin-bottom:14px;}
-        .pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-        .pill span{color:var(--text);font-weight:600;}
+        /* ═══════════════════════════════════════════
+           APP INVENTORY — FULL SCREEN SLIDE-IN PANEL
+           ═══════════════════════════════════════════ */
+        .apps-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);z-index:200;opacity:0;transition:opacity .3s;}
+        .apps-scrim.on{display:block;opacity:1;}
+
+        .apps-panel{position:fixed;top:0;right:0;bottom:0;width:min(860px,100vw);background:var(--bg);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);box-shadow:-8px 0 48px rgba(0,0,0,0.5);}
+        .apps-panel.open{transform:translateX(0);}
+
+        /* Panel topbar */
+        .ap-topbar{display:flex;align-items:center;gap:14px;padding:0 28px;height:64px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+        .ap-back-btn{display:flex;align-items:center;gap:8px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:var(--accent);padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;transition:all .15s;white-space:nowrap;}
+        .ap-back-btn:hover{background:rgba(79,142,247,.18);}
+        .ap-title-wrap{flex:1;min-width:0;}
+        .ap-title{font-size:15px;font-weight:800;}
+        .ap-subtitle{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+        /* Summary stat cards */
+        .ap-stats{display:flex;gap:12px;padding:16px 28px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+        .ap-stat{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;position:relative;overflow:hidden;}
+        .ap-stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+        .ap-stat.s-total::after{background:linear-gradient(90deg,var(--accent),#60a5fa);}
+        .ap-stat.s-sys::after{background:linear-gradient(90deg,var(--orange),#fbbf24);}
+        .ap-stat.s-usr::after{background:linear-gradient(90deg,var(--green),#34d399);}
+        .ap-stat-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+        .ap-stat-val{font-size:28px;font-weight:800;line-height:1;}
+        .ap-stat.s-total .ap-stat-val{color:var(--accent);}
+        .ap-stat.s-sys .ap-stat-val{color:var(--orange);}
+        .ap-stat.s-usr .ap-stat-val{color:var(--green);}
+
+        /* Filter bar */
+        .ap-filterbar{display:flex;align-items:center;gap:10px;padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+        .ap-search{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px 9px 36px;color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;}
+        .ap-search:focus{border-color:var(--accent);}
+        .ap-search::placeholder{color:var(--muted);}
+        .ap-filter-btn{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;transition:all .15s;white-space:nowrap;}
+        .ap-filter-btn:hover{border-color:var(--accent);color:var(--accent);}
+        .ap-filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.1);}
+        .ap-filter-btn.f-sys.active{border-color:var(--orange);color:var(--orange);background:rgba(245,158,11,.08);}
+        .ap-filter-btn.f-usr.active{border-color:var(--green);color:var(--green);background:rgba(16,217,126,.08);}
+
+        /* App list body */
+        .ap-body{flex:1;overflow-y:auto;}
+        .ap-body::-webkit-scrollbar{width:4px;}
+        .ap-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+        /* Sticky column headers */
+        .ap-row-head{display:grid;grid-template-columns:2fr 2.8fr 110px 80px;gap:0;padding:10px 28px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;}
+        .ap-col-hdr{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;}
+
+        /* Each app row */
+        .ap-row{display:grid;grid-template-columns:2fr 2.8fr 110px 80px;gap:0;padding:11px 28px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s;}
+        .ap-row:hover{background:var(--surface);}
+        .ap-app-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px;}
+        .ap-pkg{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px;}
+        .ap-ver{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+        .ap-badge{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;}
+        .ap-badge-sys{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);color:var(--orange);}
+        .ap-badge-usr{background:rgba(16,217,126,.1);border:1px solid rgba(16,217,126,.3);color:var(--green);}
+        .ap-state{padding:60px 28px;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
+
+        /* SHARED TABLE STYLES */
         .tbl{width:100%;border-collapse:collapse;font-size:12px;}
         .tbl th{background:var(--surface2);color:var(--muted);padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);}
         .tbl td{padding:9px 14px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
@@ -295,7 +350,7 @@
 
         <div class="content">
 
-            <!-- Dashboard — stats only, no device list -->
+            <!-- Dashboard -->
             <div class="page active" id="page-dashboard">
                 <div class="stats-row">
                     <div class="stat-card cb"><div class="stat-lbl">Enrolled Devices</div><div class="stat-val" id="totalDevices">—</div><div class="stat-sub">total registered</div></div>
@@ -366,7 +421,7 @@
     </div>
 </div>
 
-<!-- Device Info Modal -->
+<!-- DEVICE INFO MODAL -->
 <div class="overlay" id="ov-info" onclick="ovClose(event,'ov-info')">
     <div class="modal">
         <div class="modal-hdr"><div class="modal-title" id="infoTitle">📋 Device Info</div><button class="modal-close" onclick="closeOv('ov-info')">✕</button></div>
@@ -374,14 +429,47 @@
     </div>
 </div>
 
-<!-- Apps Modal -->
-<div class="overlay" id="ov-apps" onclick="ovClose(event,'ov-apps')">
-    <div class="modal">
-        <div class="modal-hdr"><div class="modal-title" id="appsTitle">📦 App Inventory</div><button class="modal-close" onclick="closeOv('ov-apps')">✕</button></div>
-        <input class="srch" type="text" placeholder="// search apps or packages..." oninput="filterApps(this.value)">
-        <div class="app-pills" id="appPills"></div>
-        <div id="appsContent"></div>
+<!-- ═══════════════════════════════════════════════
+     APP INVENTORY — FULL SCREEN SLIDE-IN PANEL
+     ═══════════════════════════════════════════════ -->
+<div class="apps-scrim" id="appsScrim" onclick="closeAppsPanel()"></div>
+
+<div class="apps-panel" id="appsPanel">
+
+    <div class="ap-topbar">
+        <button class="ap-back-btn" onclick="closeAppsPanel()">← Back</button>
+        <div class="ap-title-wrap">
+            <div class="ap-title">📦 App Inventory</div>
+            <div class="ap-subtitle" id="apPanelSubtitle">—</div>
+        </div>
     </div>
+
+    <div class="ap-stats">
+        <div class="ap-stat s-total">
+            <div class="ap-stat-lbl">Total Apps</div>
+            <div class="ap-stat-val" id="apStatTotal">—</div>
+        </div>
+        <div class="ap-stat s-sys">
+            <div class="ap-stat-lbl">System Apps</div>
+            <div class="ap-stat-val" id="apStatSys">—</div>
+        </div>
+        <div class="ap-stat s-usr">
+            <div class="ap-stat-lbl">User Apps</div>
+            <div class="ap-stat-val" id="apStatUsr">—</div>
+        </div>
+    </div>
+
+    <div class="ap-filterbar">
+        <input class="ap-search" type="text" id="apSearchInput" placeholder="Search app name or package..." oninput="applyFilter()">
+        <button class="ap-filter-btn f-all active" id="fbAll" onclick="setFilter('all')">All</button>
+        <button class="ap-filter-btn f-usr" id="fbUsr" onclick="setFilter('user')">User</button>
+        <button class="ap-filter-btn f-sys" id="fbSys" onclick="setFilter('sys')">System</button>
+    </div>
+
+    <div class="ap-body" id="apBody">
+        <div class="ap-state">⟳ Loading apps...</div>
+    </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -389,6 +477,7 @@
     const API = 'https://mdm-project-production.up.railway.app';
     let allApps = [], qrInst = null;
     let adminId = null, adminUsername = null;
+    let apFilter = 'all';
 
     /* THEME */
     function toggleTheme() {
@@ -402,13 +491,9 @@
     setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
 
     /* AUTO REFRESH */
-    let autoRefreshInterval = null;
-    let countdownInterval   = null;
-    let countdown = 10;
-
+    let autoRefreshInterval = null, countdownInterval = null, countdown = 10;
     function startAutoRefresh() {
-        stopAutoRefresh();
-        countdown = 10;
+        stopAutoRefresh(); countdown = 10;
         document.getElementById('autoRefreshIndicator').style.display = 'flex';
         document.getElementById('refreshCountdown').textContent = countdown + 's';
         countdownInterval = setInterval(() => {
@@ -416,12 +501,8 @@
             document.getElementById('refreshCountdown').textContent = countdown + 's';
             if (countdown <= 0) countdown = 10;
         }, 1000);
-        autoRefreshInterval = setInterval(() => {
-            loadStats();
-            countdown = 10;
-        }, 10000);
+        autoRefreshInterval = setInterval(() => { loadStats(); countdown = 10; }, 10000);
     }
-
     function stopAutoRefresh() {
         if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
         if (countdownInterval)   { clearInterval(countdownInterval);   countdownInterval   = null; }
@@ -453,9 +534,7 @@
                 sessionStorage.setItem('mdm_admin_id', adminId);
                 sessionStorage.setItem('mdm_admin_username', adminUsername);
                 showDashboard();
-            } else {
-                msgEl.innerHTML = `<div class="st-err">❌ ${data}</div>`;
-            }
+            } else { msgEl.innerHTML = `<div class="st-err">❌ ${data}</div>`; }
         } catch(e) { msgEl.innerHTML = `<div class="st-err">❌ Server error: ${e.message}</div>`; }
     }
 
@@ -474,9 +553,7 @@
             if (res.ok) {
                 msgEl.innerHTML = '<div class="st-ok">✅ Account created! Please sign in.</div>';
                 setTimeout(() => switchTab('login'), 1500);
-            } else {
-                msgEl.innerHTML = `<div class="st-err">❌ ${data}</div>`;
-            }
+            } else { msgEl.innerHTML = `<div class="st-err">❌ ${data}</div>`; }
         } catch(e) { msgEl.innerHTML = `<div class="st-err">❌ Server error: ${e.message}</div>`; }
     }
 
@@ -500,7 +577,7 @@
         startAutoRefresh();
     }
 
-    /* Auto-restore session on page refresh */
+    /* Auto-restore session */
     (function(){
         const sid = sessionStorage.getItem('mdm_admin_id');
         const snam = sessionStorage.getItem('mdm_admin_username');
@@ -518,7 +595,6 @@
         if (name === 'devices') renderCards('allCards');
         if (name === 'tokens')  loadTokens();
     }
-
     function refresh() { loadStats(); }
 
     /* STATS */
@@ -568,26 +644,89 @@
         } catch(e) { document.getElementById('infoGrid').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
     }
 
-    /* APPS MODAL */
+    /* ═══════════════════════════════════════
+       APP INVENTORY — SLIDE-IN PANEL
+       ═══════════════════════════════════════ */
     async function viewApps(deviceId) {
-        document.getElementById('appsTitle').textContent = '📦 ' + deviceId.substring(0,22) + '...';
-        document.getElementById('appsContent').innerHTML = '<div class="st-loading">⟳ Loading apps...</div>';
-        document.getElementById('appPills').innerHTML = '';
-        document.getElementById('ov-apps').classList.add('on');
+        document.getElementById('apPanelSubtitle').textContent = deviceId;
+        document.getElementById('apStatTotal').textContent = '—';
+        document.getElementById('apStatSys').textContent   = '—';
+        document.getElementById('apStatUsr').textContent   = '—';
+        document.getElementById('apBody').innerHTML = '<div class="ap-state">⟳ Loading apps...</div>';
+        document.getElementById('apSearchInput').value = '';
+        apFilter = 'all';
+        setFilter('all', false);
+
+        // Open panel
+        document.getElementById('appsScrim').classList.add('on');
+        document.getElementById('appsPanel').classList.add('open');
+        document.body.style.overflow = 'hidden';
+
         try {
             const res = await fetch(`${API}/api/devices/${deviceId}/apps`);
             allApps = await res.json();
-            if (!allApps.length) { document.getElementById('appsContent').innerHTML = '<div class="st-err">⚠ No apps found. Open app → Sync App Inventory</div>'; return; }
-            renderApps(allApps);
-        } catch(e) { document.getElementById('appsContent').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
+            if (!allApps.length) {
+                document.getElementById('apBody').innerHTML = '<div class="ap-state">⚠ No apps found. Open app → Sync App Inventory</div>';
+                return;
+            }
+            const sys  = allApps.filter(a => a.isSystemApp).length;
+            const user = allApps.filter(a => !a.isSystemApp).length;
+            document.getElementById('apStatTotal').textContent = allApps.length;
+            document.getElementById('apStatSys').textContent   = sys;
+            document.getElementById('apStatUsr').textContent   = user;
+            renderApps();
+        } catch(e) {
+            document.getElementById('apBody').innerHTML = `<div class="ap-state">❌ ${e.message}</div>`;
+        }
     }
-    function renderApps(apps) {
-        const sys = apps.filter(a => a.isSystemApp).length;
-        const user = apps.filter(a => !a.isSystemApp).length;
-        document.getElementById('appPills').innerHTML = `<div class="pill">Total <span>${apps.length}</span></div><div class="pill">System <span>${sys}</span></div><div class="pill">User <span>${user}</span></div>`;
-        document.getElementById('appsContent').innerHTML = `<table class="tbl"><thead><tr><th>App Name</th><th>Package</th><th>Version</th><th>Type</th><th>Source</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.appName||'N/A'}</td><td style="color:var(--muted)">${a.packageName||'N/A'}</td><td>${a.versionName||'N/A'}</td><td><span class="tbadge ${a.isSystemApp?'tbadge-sys':'tbadge-usr'}">${a.isSystemApp?'SYS':'USER'}</span></td><td style="color:var(--muted)">${a.installSource||'N/A'}</td></tr>`).join('')}</tbody></table>`;
+
+    function closeAppsPanel() {
+        document.getElementById('appsPanel').classList.remove('open');
+        document.getElementById('appsScrim').classList.remove('on');
+        document.body.style.overflow = '';
     }
-    function filterApps(q) { renderApps(allApps.filter(a => (a.appName||'').toLowerCase().includes(q.toLowerCase()) || (a.packageName||'').toLowerCase().includes(q.toLowerCase()))); }
+
+    function setFilter(f, doRender = true) {
+        apFilter = f;
+        document.getElementById('fbAll').classList.toggle('active', f === 'all');
+        document.getElementById('fbUsr').classList.toggle('active', f === 'user');
+        document.getElementById('fbSys').classList.toggle('active', f === 'sys');
+        if (doRender) renderApps();
+    }
+
+    function applyFilter() { renderApps(); }
+
+    function renderApps() {
+        const q = (document.getElementById('apSearchInput').value || '').toLowerCase();
+        let list = allApps;
+        if (apFilter === 'user') list = list.filter(a => !a.isSystemApp);
+        if (apFilter === 'sys')  list = list.filter(a =>  a.isSystemApp);
+        if (q) list = list.filter(a =>
+            (a.appName||'').toLowerCase().includes(q) ||
+            (a.packageName||'').toLowerCase().includes(q)
+        );
+        if (!list.length) {
+            document.getElementById('apBody').innerHTML = '<div class="ap-state">No apps match your filter</div>';
+            return;
+        }
+        document.getElementById('apBody').innerHTML =
+            `<div class="ap-row-head">
+                <div class="ap-col-hdr">App Name</div>
+                <div class="ap-col-hdr">Package</div>
+                <div class="ap-col-hdr">Version</div>
+                <div class="ap-col-hdr">Type</div>
+             </div>` +
+            list.map(a => `
+            <div class="ap-row">
+                <div class="ap-app-name">${a.appName || 'N/A'}</div>
+                <div class="ap-pkg">${a.packageName || 'N/A'}</div>
+                <div class="ap-ver">${a.versionName || 'N/A'}</div>
+                <div><span class="ap-badge ${a.isSystemApp ? 'ap-badge-sys' : 'ap-badge-usr'}">${a.isSystemApp ? 'SYS' : 'USER'}</span></div>
+            </div>`).join('');
+    }
+
+    /* Escape key closes panel */
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAppsPanel(); });
 
     /* TOKEN MANAGEMENT */
     async function loadTokens() {
