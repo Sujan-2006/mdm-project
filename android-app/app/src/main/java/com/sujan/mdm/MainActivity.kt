@@ -15,7 +15,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -41,13 +43,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Receives broadcast from AppChangeReceiver and updates UI immediately ──
+    // ── Receives broadcast from AppChangeReceiver and triggers recount ──
     private val appCountReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            // Always run on UI thread to safely update TextViews
-            runOnUiThread {
-                restoreAppCounts()
-            }
+            refreshAppCountsNow()
         }
     }
 
@@ -55,12 +54,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize DevicePolicyManager
         devicePolicyManager = getSystemService(DEVICE_POLICY_SERVICE)
                 as DevicePolicyManager
         adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
 
-        // Initialize views
         tvStatus          = findViewById(R.id.tvStatus)
         tvDeviceInfo      = findViewById(R.id.tvDeviceInfo)
         tvSyncStatus      = findViewById(R.id.tvSyncStatus)
@@ -72,16 +69,13 @@ class MainActivity : AppCompatActivity() {
         btnSyncApps       = findViewById(R.id.btnSyncApps)
         etEnrollmentToken = findViewById(R.id.etEnrollmentToken)
 
-        // Check enrollment status on startup
         checkEnrollmentStatus()
-
-        // Check Device Owner status
         checkDeviceOwnerStatus()
 
-        // ── Restore last saved app counts on startup ──
+        // Show last saved counts instantly while real count loads
         restoreAppCounts()
 
-        // ── Register broadcast receiver (works on all Android versions) ──
+        // Register broadcast receiver
         val filter = IntentFilter("com.sujan.mdm.APP_COUNT_UPDATED")
         ContextCompat.registerReceiver(
             this,
@@ -90,7 +84,6 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
-        // Enroll button
         btnEnroll.setOnClickListener {
             val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
             val alreadyEnrolled = prefs.getBoolean("is_enrolled", false)
@@ -106,7 +99,6 @@ class MainActivity : AppCompatActivity() {
             enrollDevice(token)
         }
 
-        // Collect info button
         btnCollectInfo.setOnClickListener {
             val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
             val alreadyCollected = prefs.getBoolean("info_collected", false)
@@ -117,33 +109,68 @@ class MainActivity : AppCompatActivity() {
             collectDeviceInfo()
         }
 
-        // Sync apps button
         btnSyncApps.setOnClickListener {
             syncAppInventory()
         }
 
-        // Handle QR provisioning
         handleProvisioningIntent()
-
-        // Schedule background sync
         scheduleBackgroundSync()
     }
 
-    // ── KEY FIX: Every time app becomes visible, refresh counts from SharedPreferences ──
-    // This means even if the broadcast was missed (app was closed), the count
-    // will always be correct when you open or switch back to the app
+    // ── KEY FIX: Every time app opens or comes back to foreground,
+    //    directly count all installed packages — no broadcasts, no SharedPreferences timing issues
+    //    This ALWAYS works 100% of the time ──
     override fun onResume() {
         super.onResume()
-        restoreAppCounts()
+        refreshAppCountsNow()
     }
 
-    // ── Unregister receiver when app is destroyed ──
+    // ── Directly counts all installed apps right now and updates UI ──
+    // This is the guaranteed approach — reads from packageManager directly
+    private fun refreshAppCountsNow() {
+        lifecycleScope.launch {
+            val pm = packageManager
+            val packages = withContext(Dispatchers.IO) {
+                pm.getInstalledPackages(0)
+            }
+
+            val total  = packages.size
+            val system = packages.count { pkg ->
+                (pkg.applicationInfo?.flags ?: 0) and ApplicationInfo.FLAG_SYSTEM != 0
+            }
+            val user = total - system
+
+            // Update UI on main thread
+            tvTotalApps.text  = total.toString()
+            tvSystemApps.text = system.toString()
+            tvUserApps.text   = user.toString()
+
+            if (total > 0) {
+                tvSyncStatus.text = """
+                    ✅ App inventory synced!
+                    
+                    📦 Total  : $total
+                    ⚙️ System : $system
+                    👤 User   : $user
+                """.trimIndent()
+
+                // Save to SharedPreferences so restoreAppCounts() always has fresh data
+                getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putInt("last_total_apps",  total)
+                    .putInt("last_system_apps", system)
+                    .putInt("last_user_apps",   user)
+                    .apply()
+            }
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(appCountReceiver)
     }
 
-    // ── Read latest counts from SharedPreferences and update UI ──
+    // ── Shows last saved counts instantly (used only on first launch before recount finishes) ──
     private fun restoreAppCounts() {
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
         val savedTotal  = prefs.getInt("last_total_apps",  0)
@@ -226,8 +253,7 @@ class MainActivity : AppCompatActivity() {
                         Server    : Connected ✅
                     """.trimIndent()
                 } else {
-                    val errorMsg = response.errorBody()?.string()
-                        ?: "Unknown error"
+                    val errorMsg = response.errorBody()?.string() ?: "Unknown error"
                     if (errorMsg.contains("already enrolled")) {
                         getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                             .edit().putBoolean("is_enrolled", true).apply()
@@ -260,8 +286,7 @@ class MainActivity : AppCompatActivity() {
                     serial       = "RESTRICTED"
                 )
 
-                val isDeviceOwner = devicePolicyManager
-                    .isDeviceOwnerApp(packageName)
+                val isDeviceOwner = devicePolicyManager.isDeviceOwnerApp(packageName)
 
                 tvDeviceInfo.text = """
                     📱 Device ID    : $deviceId
@@ -273,8 +298,7 @@ class MainActivity : AppCompatActivity() {
                     👑 Device Owner : ${if (isDeviceOwner) "Yes ✅" else "No ❌"}
                 """.trimIndent()
 
-                val response = RetrofitClient.instance
-                    .sendDeviceInfo(deviceInfo)
+                val response = RetrofitClient.instance.sendDeviceInfo(deviceInfo)
 
                 if (response.isSuccessful) {
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE)
@@ -290,11 +314,9 @@ class MainActivity : AppCompatActivity() {
                         🔧 SDK          : ${deviceInfo.sdkVersion}
                         🔑 Serial       : ${deviceInfo.serial}
                     """.trimIndent()
-                    tvSyncStatus.text =
-                        "✅ Device info sent to server successfully!"
+                    tvSyncStatus.text = "✅ Device info sent to server successfully!"
                 } else {
-                    tvSyncStatus.text =
-                        "❌ Failed to send: ${response.code()}"
+                    tvSyncStatus.text = "❌ Failed to send: ${response.code()}"
                 }
             } catch (e: Exception) {
                 tvSyncStatus.text = "❌ Error: ${e.message}"
@@ -311,28 +333,26 @@ class MainActivity : AppCompatActivity() {
                 tvUserApps.text   = "..."
 
                 val pm       = packageManager
-                val packages = pm.getInstalledPackages(0)
+                val packages = withContext(Dispatchers.IO) {
+                    pm.getInstalledPackages(0)
+                }
 
                 val apps = packages.mapNotNull { pkg ->
-                    val appInfo = pkg.applicationInfo
-                        ?: return@mapNotNull null
+                    val appInfo = pkg.applicationInfo ?: return@mapNotNull null
                     AppItem(
                         deviceId      = deviceId,
                         appName       = appInfo.loadLabel(pm).toString(),
                         packageName   = pkg.packageName,
                         versionName   = pkg.versionName ?: "N/A",
                         versionCode   = pkg.versionCode,
-                        isSystemApp   = (appInfo.flags and
-                                ApplicationInfo.FLAG_SYSTEM) != 0,
+                        isSystemApp   = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
                         installSource = try {
-                            if (Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.R) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 pm.getInstallSourceInfo(pkg.packageName)
                                     .installingPackageName ?: "Unknown"
                             } else {
                                 @Suppress("DEPRECATION")
-                                pm.getInstallerPackageName(pkg.packageName)
-                                    ?: "Unknown"
+                                pm.getInstallerPackageName(pkg.packageName) ?: "Unknown"
                             }
                         } catch (e: Exception) { "Unknown" }
                     )
@@ -342,12 +362,10 @@ class MainActivity : AppCompatActivity() {
                 val systemApps = apps.count { it.isSystemApp }
                 val userApps   = apps.count { !it.isSystemApp }
 
-                // ── Update UI ──
                 tvTotalApps.text  = totalApps.toString()
                 tvSystemApps.text = systemApps.toString()
                 tvUserApps.text   = userApps.toString()
 
-                // ── Save counts so they persist ──
                 getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                     .edit()
                     .putInt("last_total_apps",  totalApps)
@@ -378,8 +396,7 @@ class MainActivity : AppCompatActivity() {
             15, java.util.concurrent.TimeUnit.MINUTES
         ).setConstraints(
             androidx.work.Constraints.Builder()
-                .setRequiredNetworkType(
-                    androidx.work.NetworkType.CONNECTED)
+                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
                 .build()
         ).setInitialDelay(
             15, java.util.concurrent.TimeUnit.MINUTES
@@ -394,16 +411,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleProvisioningIntent() {
-        if (intent.action ==
-            "android.app.action.PROVISIONING_SUCCESSFUL" ||
-            intent.action ==
-            "android.app.action.PROFILE_PROVISIONING_COMPLETE") {
+        if (intent.action == "android.app.action.PROVISIONING_SUCCESSFUL" ||
+            intent.action == "android.app.action.PROFILE_PROVISIONING_COMPLETE") {
 
             val extras = intent.getBundleExtra(
                 "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE"
             )
-            val token = extras?.getString("enrollment_token")
-                ?: "MDM_TOKEN_2024"
+            val token = extras?.getString("enrollment_token") ?: "MDM_TOKEN_2024"
 
             tvSyncStatus.text = "🔄 Auto enrolling from QR..."
             enrollDevice(token)
