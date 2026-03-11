@@ -16,4 +16,8 @@ public interface AppInventoryRepository
     void deleteByDeviceId(String deviceId);
 
     long countByDeviceIdIn(Collection<String> deviceIds);
+
+    // ── Count system/user apps separately ──
+    long countByDeviceIdInAndIsSystemApp(
+            Collection<String> deviceIds, Boolean isSystemApp);
 }

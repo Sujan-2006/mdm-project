@@ -20,6 +20,6 @@ public class AppInventory {
     private String packageName;
     private String versionName;
     private int versionCode;
-    private boolean isSystemApp;
+    private Boolean isSystemApp;
     private String installSource;
 }

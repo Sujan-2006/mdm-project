@@ -157,9 +157,20 @@ public class MdmController {
                                 .stream()
                                 .map(EnrolledDevice::getDeviceId)
                                 .toList());
+        List<String> deviceIds = enrolledDeviceRepository
+                .findByAdminId(adminId)
+                .stream()
+                .map(EnrolledDevice::getDeviceId)
+                .toList();
+
+        long systemApps = appInventoryRepository.countByDeviceIdInAndIsSystemApp(deviceIds, true);
+        long userApps   = appInventoryRepository.countByDeviceIdInAndIsSystemApp(deviceIds, false);
+
         Map<String, Long> stats = new HashMap<>();
         stats.put("totalDevices", totalDevices);
         stats.put("totalApps",    totalApps);
+        stats.put("systemApps",   systemApps);
+        stats.put("userApps",     userApps);
         return ResponseEntity.ok(stats);
     }
 
