@@ -150,7 +150,7 @@
         .apps-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);z-index:200;opacity:0;transition:opacity .3s;}
         .apps-scrim.on{display:block;opacity:1;}
 
-        .apps-panel{position:fixed;top:0;right:0;bottom:0;width:min(860px,100vw);background:var(--bg);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);box-shadow:-8px 0 48px rgba(0,0,0,0.5);}
+        .apps-panel{position:fixed;top:0;right:0;bottom:0;width:min(1000px,100vw);background:var(--bg);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);box-shadow:-8px 0 48px rgba(0,0,0,0.5);}
         .apps-panel.open{transform:translateX(0);}
 
         /* Panel topbar */
@@ -191,15 +191,16 @@
         .ap-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 
         /* Sticky column headers */
-        .ap-row-head{display:grid;grid-template-columns:2fr 2.8fr 110px 80px;gap:0;padding:10px 28px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;}
+        .ap-row-head{display:grid;grid-template-columns:1.6fr 2.2fr 100px 72px 1.2fr;gap:0;padding:10px 28px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;}
         .ap-col-hdr{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;}
 
         /* Each app row */
-        .ap-row{display:grid;grid-template-columns:2fr 2.8fr 110px 80px;gap:0;padding:11px 28px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s;}
+        .ap-row{display:grid;grid-template-columns:1.6fr 2.2fr 100px 72px 1.2fr;gap:0;padding:11px 28px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s;}
         .ap-row:hover{background:var(--surface);}
         .ap-app-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px;}
         .ap-pkg{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px;}
         .ap-ver{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+        .ap-src{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .ap-badge{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;}
         .ap-badge-sys{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);color:var(--orange);}
         .ap-badge-usr{background:rgba(16,217,126,.1);border:1px solid rgba(16,217,126,.3);color:var(--green);}
@@ -715,6 +716,7 @@
                 <div class="ap-col-hdr">Package</div>
                 <div class="ap-col-hdr">Version</div>
                 <div class="ap-col-hdr">Type</div>
+                <div class="ap-col-hdr">Source</div>
              </div>` +
             list.map(a => `
             <div class="ap-row">
@@ -722,6 +724,7 @@
                 <div class="ap-pkg">${a.packageName || 'N/A'}</div>
                 <div class="ap-ver">${a.versionName || 'N/A'}</div>
                 <div><span class="ap-badge ${a.isSystemApp ? 'ap-badge-sys' : 'ap-badge-usr'}">${a.isSystemApp ? 'SYS' : 'USER'}</span></div>
+                <div class="ap-src">${a.installSource || 'N/A'}</div>
             </div>`).join('');
     }
 
