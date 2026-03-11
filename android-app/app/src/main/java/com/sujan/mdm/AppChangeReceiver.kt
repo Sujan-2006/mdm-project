@@ -24,7 +24,7 @@ class AppChangeReceiver : BroadcastReceiver() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    // Small delay to let the package manager settle
+                    // Wait for package manager to settle
                     delay(2000)
 
                     val pm       = context.packageManager
@@ -59,18 +59,21 @@ class AppChangeReceiver : BroadcastReceiver() {
                     val systemApps = apps.count { it.isSystemApp }
                     val userApps   = apps.count { !it.isSystemApp }
 
-                    // ── Save updated counts locally ──
+                    // ── Save counts using commit() so data is written BEFORE broadcast ──
                     prefs.edit()
                         .putInt("last_total_apps",  totalApps)
                         .putInt("last_system_apps", systemApps)
                         .putInt("last_user_apps",   userApps)
-                        .apply()
+                        .commit() // commit() blocks until written — safer than apply()
 
-                    // ── Tell MainActivity to refresh UI instantly ──
+                    // ── Extra delay to guarantee prefs are saved ──
+                    delay(500)
+
+                    // ── Tell MainActivity to refresh UI ──
                     val uiIntent = Intent("com.sujan.mdm.APP_COUNT_UPDATED")
                     context.sendBroadcast(uiIntent)
 
-                    // ── Sync updated list to server ──
+                    // ── Sync full updated list to backend ──
                     RetrofitClient.instance.sendApps(apps)
 
                 } catch (e: Exception) {

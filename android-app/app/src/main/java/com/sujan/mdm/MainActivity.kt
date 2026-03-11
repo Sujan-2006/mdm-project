@@ -41,25 +41,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // FIXED - actually rescans and updates UI
+    // ── Receives broadcast from AppChangeReceiver and updates UI immediately ──
     private val appCountReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-            val total  = prefs.getInt("last_total_apps",  0)
-            val system = prefs.getInt("last_system_apps", 0)
-            val user   = prefs.getInt("last_user_apps",   0)
-
+            // Always run on UI thread to safely update TextViews
             runOnUiThread {
-                tvTotalApps.text  = total.toString()
-                tvSystemApps.text = system.toString()
-                tvUserApps.text   = user.toString()
-                tvSyncStatus.text = """
-                ✅ App inventory synced!
-                
-                📦 Total  : $total
-                ⚙️ System : $system
-                👤 User   : $user
-            """.trimIndent()
+                restoreAppCounts()
             }
         }
     }
@@ -94,7 +81,7 @@ class MainActivity : AppCompatActivity() {
         // ── Restore last saved app counts on startup ──
         restoreAppCounts()
 
-        // ── Register receiver using ContextCompat (works on all Android versions) ──
+        // ── Register broadcast receiver (works on all Android versions) ──
         val filter = IntentFilter("com.sujan.mdm.APP_COUNT_UPDATED")
         ContextCompat.registerReceiver(
             this,
@@ -142,13 +129,21 @@ class MainActivity : AppCompatActivity() {
         scheduleBackgroundSync()
     }
 
+    // ── KEY FIX: Every time app becomes visible, refresh counts from SharedPreferences ──
+    // This means even if the broadcast was missed (app was closed), the count
+    // will always be correct when you open or switch back to the app
+    override fun onResume() {
+        super.onResume()
+        restoreAppCounts()
+    }
+
     // ── Unregister receiver when app is destroyed ──
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(appCountReceiver)
     }
 
-    // ── Restore last saved app counts from SharedPreferences ──
+    // ── Read latest counts from SharedPreferences and update UI ──
     private fun restoreAppCounts() {
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
         val savedTotal  = prefs.getInt("last_total_apps",  0)
