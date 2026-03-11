@@ -1,5 +1,6 @@
 package com.mdm.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,10 @@ public class AppInventory {
     private String packageName;
     private String versionName;
     private int versionCode;
+
+    @JsonProperty("isSystemApp")
+    @Column(name = "is_system_app")
     private Boolean isSystemApp;
+
     private String installSource;
 }
