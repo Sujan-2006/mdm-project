@@ -7,7 +7,9 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
@@ -21,6 +23,9 @@ interface ApiService {
 
     @POST("app-inventory")
     suspend fun sendApps(@Body apps: List<AppItem>): Response<ResponseBody>
+
+    @GET("/api/device-admin")
+    suspend fun getAdminIdForDevice(@Query("deviceId") deviceId: String): Response<AdminIdResponse>
 }
 
 object RetrofitClient {

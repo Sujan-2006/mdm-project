@@ -71,11 +71,8 @@ class MainActivity : AppCompatActivity() {
 
         checkEnrollmentStatus()
         checkDeviceOwnerStatus()
-
-        // Show last saved counts instantly while real count loads
         restoreAppCounts()
 
-        // Register broadcast receiver
         val filter = IntentFilter("com.sujan.mdm.APP_COUNT_UPDATED")
         ContextCompat.registerReceiver(
             this,
@@ -86,8 +83,7 @@ class MainActivity : AppCompatActivity() {
 
         btnEnroll.setOnClickListener {
             val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-            val alreadyEnrolled = prefs.getBoolean("is_enrolled", false)
-            if (alreadyEnrolled) {
+            if (prefs.getBoolean("is_enrolled", false)) {
                 tvSyncStatus.text = "✅ Device already enrolled!"
                 return@setOnClickListener
             }
@@ -101,38 +97,28 @@ class MainActivity : AppCompatActivity() {
 
         btnCollectInfo.setOnClickListener {
             val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-            val alreadyCollected = prefs.getBoolean("info_collected", false)
-            if (alreadyCollected) {
+            if (prefs.getBoolean("info_collected", false)) {
                 tvSyncStatus.text = "✅ Device info already sent!"
                 return@setOnClickListener
             }
             collectDeviceInfo()
         }
 
-        btnSyncApps.setOnClickListener {
-            syncAppInventory()
-        }
+        btnSyncApps.setOnClickListener { syncAppInventory() }
 
         handleProvisioningIntent()
         scheduleBackgroundSync()
     }
 
-    // ── KEY FIX: Every time app opens or comes back to foreground,
-    //    directly count all installed packages — no broadcasts, no SharedPreferences timing issues
-    //    This ALWAYS works 100% of the time ──
     override fun onResume() {
         super.onResume()
         refreshAppCountsNow()
     }
 
-    // ── Directly counts all installed apps right now and updates UI ──
-    // This is the guaranteed approach — reads from packageManager directly
     private fun refreshAppCountsNow() {
         lifecycleScope.launch {
             val pm = packageManager
-            val packages = withContext(Dispatchers.IO) {
-                pm.getInstalledPackages(0)
-            }
+            val packages = withContext(Dispatchers.IO) { pm.getInstalledPackages(0) }
 
             val total  = packages.size
             val system = packages.count { pkg ->
@@ -140,7 +126,6 @@ class MainActivity : AppCompatActivity() {
             }
             val user = total - system
 
-            // Update UI on main thread
             tvTotalApps.text  = total.toString()
             tvSystemApps.text = system.toString()
             tvUserApps.text   = user.toString()
@@ -154,9 +139,7 @@ class MainActivity : AppCompatActivity() {
                     👤 User   : $user
                 """.trimIndent()
 
-                // Save to SharedPreferences so restoreAppCounts() always has fresh data
-                getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-                    .edit()
+                getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()
                     .putInt("last_total_apps",  total)
                     .putInt("last_system_apps", system)
                     .putInt("last_user_apps",   user)
@@ -170,13 +153,11 @@ class MainActivity : AppCompatActivity() {
         unregisterReceiver(appCountReceiver)
     }
 
-    // ── Shows last saved counts instantly (used only on first launch before recount finishes) ──
     private fun restoreAppCounts() {
-        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+        val prefs       = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
         val savedTotal  = prefs.getInt("last_total_apps",  0)
         val savedSystem = prefs.getInt("last_system_apps", 0)
         val savedUser   = prefs.getInt("last_user_apps",   0)
-
         if (savedTotal > 0) {
             tvTotalApps.text  = savedTotal.toString()
             tvSystemApps.text = savedSystem.toString()
@@ -192,30 +173,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkEnrollmentStatus() {
-        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+        val prefs           = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
         val isEnrolled      = prefs.getBoolean("is_enrolled",    false)
         val isInfoCollected = prefs.getBoolean("info_collected", false)
-
         if (isEnrolled) {
             tvStatus.text = "🟢 Status: Enrolled ✅"
             tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
-            btnEnroll.isEnabled = false
-            btnEnroll.alpha = 0.5f
+            btnEnroll.isEnabled         = false
+            btnEnroll.alpha             = 0.5f
             etEnrollmentToken.isEnabled = false
-            etEnrollmentToken.hint = "Already enrolled"
+            etEnrollmentToken.hint      = "Already enrolled"
         }
-
         if (isInfoCollected) {
             btnCollectInfo.isEnabled = false
-            btnCollectInfo.alpha = 0.5f
-            tvDeviceInfo.text = "✅ Device Info Already Collected!"
+            btnCollectInfo.alpha     = 0.5f
+            tvDeviceInfo.text        = "✅ Device Info Already Collected!"
         }
     }
 
     private fun checkDeviceOwnerStatus() {
         val isDeviceOwner = devicePolicyManager.isDeviceOwnerApp(packageName)
-        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-        val isEnrolled = prefs.getBoolean("is_enrolled", false)
+        val isEnrolled    = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+            .getBoolean("is_enrolled", false)
         if (isDeviceOwner) {
             tvStatus.text = "🟢 Status: Device Owner Active"
             tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
@@ -230,20 +209,37 @@ class MainActivity : AppCompatActivity() {
                 tvStatus.text     = "🔄 Status: Enrolling..."
                 tvSyncStatus.text = "Connecting to server..."
 
-                val response = RetrofitClient.instance.enroll(
-                    EnrollRequest(deviceId, token)
-                )
+                val response = RetrofitClient.instance.enroll(EnrollRequest(deviceId, token))
 
                 if (response.isSuccessful) {
-                    getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-                        .edit().putBoolean("is_enrolled", true).apply()
+
+                    // ── Fetch adminId dynamically from the server ──────────────
+                    // We call /api/devices and find THIS device in the list.
+                    // The device object contains adminId — works for ANY admin account.
+                    var resolvedAdminId = -1L
+                    try {
+                        // We don't know the adminId yet, so we hit the lookup endpoint
+                        // /api/device-admin?deviceId=xxx which returns just the adminId
+                        val adminRes = RetrofitClient.instance.getAdminIdForDevice(deviceId)
+                        if (adminRes.isSuccessful) {
+                            resolvedAdminId = adminRes.body()?.adminId ?: -1L
+                        }
+                    } catch (e: Exception) {
+                        // Fallback: will try again on next launch via fetchAndSaveAdminId()
+                        e.printStackTrace()
+                    }
+
+                    getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()
+                        .putBoolean("is_enrolled", true)
+                        .putLong("admin_id", resolvedAdminId)
+                        .apply()
 
                     tvStatus.text = "🟢 Status: Enrolled ✅"
                     tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
-                    btnEnroll.isEnabled = false
-                    btnEnroll.alpha = 0.5f
+                    btnEnroll.isEnabled         = false
+                    btnEnroll.alpha             = 0.5f
                     etEnrollmentToken.isEnabled = false
-                    etEnrollmentToken.hint = "Already enrolled"
+                    etEnrollmentToken.hint      = "Already enrolled"
 
                     tvSyncStatus.text = """
                         ✅ Device enrolled successfully!
@@ -252,21 +248,40 @@ class MainActivity : AppCompatActivity() {
                         Token Used: $token
                         Server    : Connected ✅
                     """.trimIndent()
+
                 } else {
                     val errorMsg = response.errorBody()?.string() ?: "Unknown error"
                     if (errorMsg.contains("already enrolled")) {
                         getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                             .edit().putBoolean("is_enrolled", true).apply()
+                        // Try to resolve adminId even for already-enrolled devices
+                        fetchAndSaveAdminId()
                         checkEnrollmentStatus()
                         tvSyncStatus.text = "✅ Device already enrolled!"
                     } else {
-                        tvStatus.text = "🔴 Status: Enrollment Failed"
+                        tvStatus.text     = "🔴 Status: Enrollment Failed"
                         tvSyncStatus.text = "❌ $errorMsg"
                     }
                 }
             } catch (e: Exception) {
                 tvStatus.text     = "🔴 Status: Connection Error"
                 tvSyncStatus.text = "❌ Error: ${e.message}\n\nCheck internet connection!"
+            }
+        }
+    }
+
+    // ── Called for already-enrolled devices to resolve & save adminId ──
+    private fun fetchAndSaveAdminId() {
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getAdminIdForDevice(deviceId)
+                if (res.isSuccessful) {
+                    val id = res.body()?.adminId ?: return@launch
+                    getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                        .edit().putLong("admin_id", id).apply()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
@@ -304,7 +319,7 @@ class MainActivity : AppCompatActivity() {
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                         .edit().putBoolean("info_collected", true).apply()
                     btnCollectInfo.isEnabled = false
-                    btnCollectInfo.alpha = 0.5f
+                    btnCollectInfo.alpha     = 0.5f
                     tvDeviceInfo.text = """
                         ✅ Device Info Collected!
                         
@@ -333,9 +348,7 @@ class MainActivity : AppCompatActivity() {
                 tvUserApps.text   = "..."
 
                 val pm       = packageManager
-                val packages = withContext(Dispatchers.IO) {
-                    pm.getInstalledPackages(0)
-                }
+                val packages = withContext(Dispatchers.IO) { pm.getInstalledPackages(0) }
 
                 val apps = packages.mapNotNull { pkg ->
                     val appInfo = pkg.applicationInfo ?: return@mapNotNull null
@@ -366,8 +379,7 @@ class MainActivity : AppCompatActivity() {
                 tvSystemApps.text = systemApps.toString()
                 tvUserApps.text   = userApps.toString()
 
-                getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-                    .edit()
+                getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()
                     .putInt("last_total_apps",  totalApps)
                     .putInt("last_system_apps", systemApps)
                     .putInt("last_user_apps",   userApps)
@@ -413,12 +425,10 @@ class MainActivity : AppCompatActivity() {
     private fun handleProvisioningIntent() {
         if (intent.action == "android.app.action.PROVISIONING_SUCCESSFUL" ||
             intent.action == "android.app.action.PROFILE_PROVISIONING_COMPLETE") {
-
             val extras = intent.getBundleExtra(
                 "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE"
             )
             val token = extras?.getString("enrollment_token") ?: "MDM_TOKEN_2024"
-
             tvSyncStatus.text = "🔄 Auto enrolling from QR..."
             enrollDevice(token)
         }

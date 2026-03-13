@@ -28,6 +28,9 @@ public class MdmController {
     private AppInventoryRepository appInventoryRepository;
 
     @Autowired
+    private AppActivityLogRepository activityLogRepository;
+
+    @Autowired
     private EnrollmentTokenRepository enrollmentTokenRepository;
 
     // ── Enroll with token validation ──
@@ -224,5 +227,29 @@ public class MdmController {
             @PathVariable Long id) {
         enrollmentTokenRepository.deleteById(id);
         return ResponseEntity.ok("Token deleted");
+    }
+
+    // Save a new activity log entry
+    @PostMapping("/api/activity-log")
+    public ResponseEntity<?> logActivity(@RequestBody AppActivityLog log) {
+        log.setTimestamp(java.time.LocalDateTime.now());
+        activityLogRepository.save(log);
+        return ResponseEntity.ok("logged");
+    }
+
+    // Fetch logs for dashboard
+    @GetMapping("/api/activity-log")
+    public List<AppActivityLog> getActivityLog(@RequestParam Long adminId) {
+        return activityLogRepository.findTop50ByAdminIdOrderByTimestampDesc(adminId);
+    }
+    @GetMapping("/api/device-admin")
+    public ResponseEntity<?> getAdminIdForDevice(@RequestParam String deviceId) {
+        return enrolledDeviceRepository.findByDeviceId(deviceId)
+                .map(device -> {
+                    Map<String, Long> res = new HashMap<>();
+                    res.put("adminId", device.getAdminId());
+                    return ResponseEntity.ok(res);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
