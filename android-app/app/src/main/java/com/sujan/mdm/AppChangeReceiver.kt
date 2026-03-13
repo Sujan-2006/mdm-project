@@ -26,7 +26,6 @@ class AppChangeReceiver : BroadcastReceiver() {
 
         val prefs    = context.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
         val deviceId = prefs.getString("device_id", null) ?: return
-        val adminId  = prefs.getLong("admin_id", -1L)
 
         // The package that was added/removed
         val changedPkg = intent.data?.schemeSpecificPart ?: return
@@ -35,7 +34,7 @@ class AppChangeReceiver : BroadcastReceiver() {
         val logAction = when (action) {
             Intent.ACTION_PACKAGE_ADDED    -> "INSTALLED"
             Intent.ACTION_PACKAGE_REMOVED  -> "UNINSTALLED"
-            Intent.ACTION_PACKAGE_REPLACED -> "INSTALLED"   // update = re-install
+            Intent.ACTION_PACKAGE_REPLACED -> "INSTALLED"
             else                           -> return
         }
 
@@ -44,7 +43,31 @@ class AppChangeReceiver : BroadcastReceiver() {
                 // Wait for package manager to settle
                 delay(2000)
 
-                val pm = context.packageManager
+                val pm     = context.packageManager
+                val client = OkHttpClient()
+
+                // ── Resolve adminId — fetch from server if not cached ────────
+                var adminId = prefs.getLong("admin_id", -1L)
+                if (adminId == -1L) {
+                    try {
+                        val req = Request.Builder()
+                            .url("https://mdm-project-production.up.railway.app/api/device-admin?deviceId=$deviceId")
+                            .get()
+                            .build()
+                        val resp = client.newCall(req).execute()
+                        val body = resp.body?.string()
+                        if (resp.isSuccessful && body != null) {
+                            val json = JSONObject(body)
+                            adminId  = json.optLong("adminId", -1L)
+                            if (adminId != -1L) {
+                                prefs.edit().putLong("admin_id", adminId).apply()
+                            }
+                        }
+                        resp.close()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
 
                 // ── 1. Log the specific install/uninstall event ──────────────
                 val appName: String
@@ -72,21 +95,20 @@ class AppChangeReceiver : BroadcastReceiver() {
                     } catch (e: Exception) { "Unknown" }
                 }
 
-                // POST activity log entry to backend
+                // POST activity log entry — works even if adminId was just fetched
                 if (adminId != -1L) {
-                    val json = JSONObject().apply {
-                        put("deviceId",      deviceId)
-                        put("adminId",       adminId)
-                        put("model",         Build.MODEL)
-                        put("manufacturer",  Build.MANUFACTURER)
-                        put("appName",       appName)
-                        put("packageName",   changedPkg)
-                        put("installSource", installSource)
-                        put("action",        logAction)
-                    }
                     try {
-                        val client = OkHttpClient()
-                        val body   = json.toString()
+                        val json = JSONObject().apply {
+                            put("deviceId",      deviceId)
+                            put("adminId",       adminId)
+                            put("model",         Build.MODEL)
+                            put("manufacturer",  Build.MANUFACTURER)
+                            put("appName",       appName)
+                            put("packageName",   changedPkg)
+                            put("installSource", installSource)
+                            put("action",        logAction)
+                        }
+                        val body = json.toString()
                             .toRequestBody("application/json".toMediaType())
                         val req = Request.Builder()
                             .url("https://mdm-project-production.up.railway.app/api/activity-log")
@@ -133,7 +155,6 @@ class AppChangeReceiver : BroadcastReceiver() {
                     .putInt("last_user_apps",   userApps)
                     .commit()
 
-                // Extra delay to guarantee prefs are flushed
                 delay(500)
 
                 // Tell MainActivity to refresh UI
