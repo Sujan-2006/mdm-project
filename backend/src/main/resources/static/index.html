@@ -114,25 +114,47 @@
         .sec-hdr::before{content:'';display:inline-block;width:4px;height:14px;background:var(--accent);border-radius:2px;}
 
         /* ═══════════════════════════════════════
-           ACTIVITY LOG — COMPACT
+           ACTIVITY LOG — compact, own scroll
            ═══════════════════════════════════════ */
-        .activity-feed{display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+        .activity-wrap{
+            border:1px solid var(--border);
+            border-radius:12px;
+            overflow:hidden;
+            display:flex;
+            flex-direction:column;
+            max-height:420px;  /* fixed height — only this scrolls */
+        }
+        .activity-feed{
+            overflow-y:auto;
+            flex:1;
+        }
+        .activity-feed::-webkit-scrollbar{width:4px;}
+        .activity-feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+        .al-head{
+            display:grid;
+            grid-template-columns:28px 80px 1fr 1fr 150px 72px;
+            gap:0 12px;
+            padding:8px 16px;
+            background:var(--surface2);
+            border-bottom:1px solid var(--border);
+            position:sticky;top:0;z-index:2;
+        }
+        .al-head span{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
 
         .al-row{
             display:grid;
-            grid-template-columns:28px 70px 1fr 1fr 140px 72px;
+            grid-template-columns:28px 80px 1fr 1fr 150px 72px;
             align-items:center;
             gap:0 12px;
             padding:9px 16px;
             background:var(--surface);
             border-bottom:1px solid var(--border);
             transition:background .1s;
+            position:relative;
         }
         .al-row:last-child{border-bottom:none;}
         .al-row:hover{background:var(--surface2);}
-
-        /* colour strip on left */
-        .al-row{position:relative;}
         .al-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
         .al-row.installed::before{background:var(--green);}
         .al-row.uninstalled::before{background:var(--red);}
@@ -144,28 +166,12 @@
 
         .al-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .al-pkg{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
         .al-device{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .al-device span{color:var(--accent);}
-
         .al-src{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
         .al-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:right;white-space:nowrap;}
 
-        /* Table header row */
-        .al-head{
-            display:grid;
-            grid-template-columns:28px 70px 1fr 1fr 140px 72px;
-            gap:0 12px;
-            padding:8px 16px;
-            background:var(--surface2);
-            border-bottom:1px solid var(--border);
-        }
-        .al-head span{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
-
-        /* Empty state */
-        .al-empty{text-align:center;padding:40px 28px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:12px;}
-        .al-empty .al-empty-ico{font-size:32px;margin-bottom:10px;}
+        .al-empty{text-align:center;padding:40px 28px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);}
+        .al-empty-ico{font-size:32px;margin-bottom:10px;}
 
         /* DEVICE CARDS */
         .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
@@ -398,7 +404,10 @@
                     <div class="stat-card cp"><div class="stat-lbl">Active Enrollments</div><div class="stat-val" id="totalEnrolled">—</div><div class="stat-sub">currently active</div></div>
                 </div>
 
-                <div class="sec-hdr">Recent App Activity <span style="margin-left:auto;font-size:9px;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:400;">Last 20 events</span></div>
+                <div class="sec-hdr">
+                    Recent App Activity
+                    <span style="margin-left:auto;font-size:9px;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:400;">Last 20 events · newest first</span>
+                </div>
                 <div id="activityFeed"><div class="st-loading">⟳ Loading activity...</div></div>
             </div>
 
@@ -526,9 +535,7 @@
             if (countdown <= 0) countdown = 10;
         }, 1000);
         autoRefreshInterval = setInterval(() => {
-            loadStats();
-            loadActivityLog();
-            countdown = 10;
+            loadStats(); loadActivityLog(); countdown = 10;
         }, 10000);
     }
     function stopAutoRefresh() {
@@ -537,7 +544,7 @@
         document.getElementById('autoRefreshIndicator').style.display = 'none';
     }
 
-    /* LOGIN / REGISTER */
+    /* LOGIN */
     function switchTab(tab) {
         document.querySelectorAll('.login-tab').forEach((b,i) => b.classList.toggle('active',(i===0)===(tab==='login')));
         document.getElementById('loginForm').classList.toggle('active', tab==='login');
@@ -552,10 +559,7 @@
         const msgEl = document.getElementById('loginMsg');
         if (!username || !password) { msgEl.innerHTML = '<div class="st-err">⚠ Please enter username and password!</div>'; return; }
         try {
-            const res = await fetch(`${API}/api/admin/login`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ username, password })
-            });
+            const res  = await fetch(`${API}/api/admin/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password}) });
             const data = await res.json();
             if (res.ok) {
                 adminId = data.id; adminUsername = data.username;
@@ -570,18 +574,13 @@
         const username = document.getElementById('regUsername').value.trim();
         const email    = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
-        const msgEl = document.getElementById('registerMsg');
+        const msgEl    = document.getElementById('registerMsg');
         if (!username || !password) { msgEl.innerHTML = '<div class="st-err">⚠ Username and password are required!</div>'; return; }
         try {
-            const res = await fetch(`${API}/api/admin/register`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ username, email, password })
-            });
+            const res  = await fetch(`${API}/api/admin/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,email,password}) });
             const data = await res.json();
-            if (res.ok) {
-                msgEl.innerHTML = '<div class="st-ok">✅ Account created! Please sign in.</div>';
-                setTimeout(() => switchTab('login'), 1500);
-            } else { msgEl.innerHTML = `<div class="st-err">❌ ${data}</div>`; }
+            if (res.ok) { msgEl.innerHTML = '<div class="st-ok">✅ Account created! Please sign in.</div>'; setTimeout(() => switchTab('login'), 1500); }
+            else { msgEl.innerHTML = `<div class="st-err">❌ ${data}</div>`; }
         } catch(e) { msgEl.innerHTML = `<div class="st-err">❌ Server error: ${e.message}</div>`; }
     }
 
@@ -601,12 +600,9 @@
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('appShell').classList.add('visible');
         document.getElementById('sidebarAdminName').textContent = adminUsername;
-        loadStats();
-        loadActivityLog();
-        startAutoRefresh();
+        loadStats(); loadActivityLog(); startAutoRefresh();
     }
 
-    /* Auto-restore session */
     (function(){
         const sid = sessionStorage.getItem('mdm_admin_id');
         const snam = sessionStorage.getItem('mdm_admin_username');
@@ -629,7 +625,7 @@
     /* STATS */
     async function loadStats() {
         try {
-            const res = await fetch(`${API}/api/stats?adminId=${adminId}`);
+            const res  = await fetch(`${API}/api/stats?adminId=${adminId}`);
             const data = await res.json();
             document.getElementById('totalDevices').textContent  = data.totalDevices;
             document.getElementById('totalApps').textContent     = data.totalApps;
@@ -638,22 +634,18 @@
     }
 
     /* ═══════════════════════════════════════
-       ACTIVITY LOG — compact table layout, last 20
+       ACTIVITY LOG
+       Backend returns newest first (OrderByTimestampDesc).
+       Time is stored as UTC — we convert to local time for display.
        ═══════════════════════════════════════ */
     async function loadActivityLog() {
         const feed = document.getElementById('activityFeed');
         try {
             const res  = await fetch(`${API}/api/activity-log?adminId=${adminId}`);
-            const all  = await res.json();
-            // Take only last 20, most recent first
-            const logs = all.slice(-20).reverse();
+            const logs = await res.json(); // already newest first from backend
 
             if (!logs.length) {
-                feed.innerHTML = `
-                <div class="al-empty">
-                    <div class="al-empty-ico">📭</div>
-                    No app activity yet. Install or uninstall an app on an enrolled device.
-                </div>`;
+                feed.innerHTML = `<div class="activity-wrap"><div class="al-empty"><div class="al-empty-ico">📭</div>No app activity yet. Install or uninstall an app on an enrolled device.</div></div>`;
                 return;
             }
 
@@ -661,9 +653,8 @@
                 const isInstall = log.action === 'INSTALLED';
                 const icon      = isInstall ? '📥' : '🗑️';
                 const cls       = isInstall ? 'installed' : 'uninstalled';
-                const src       = (log.installSource && log.installSource !== 'N/A')
-                    ? log.installSource : '—';
-                const shortDev  = (log.deviceId || '—').substring(0, 18) + '…';
+                const src       = (log.installSource && log.installSource !== 'N/A') ? log.installSource : '—';
+                const shortDev  = (log.deviceId || '—').substring(0, 16) + '…';
                 return `
                 <div class="al-row ${cls}">
                     <div class="al-ico">${icon}</div>
@@ -673,8 +664,8 @@
                         <div class="al-pkg">${log.packageName || ''}</div>
                     </div>
                     <div class="al-device">
-                        <span>${log.model || '—'} (${log.manufacturer || '—'})</span><br>
-                        <span style="color:var(--accent)">${shortDev}</span>
+                        ${log.model || '—'} (${log.manufacturer || '—'})<br>
+                        <span style="color:var(--accent);font-size:9px">${shortDev}</span>
                     </div>
                     <div class="al-src">⬇ ${src}</div>
                     <div class="al-time">${timeAgo(log.timestamp)}</div>
@@ -682,7 +673,7 @@
             }).join('');
 
             feed.innerHTML = `
-            <div class="activity-feed">
+            <div class="activity-wrap">
                 <div class="al-head">
                     <span></span>
                     <span>Action</span>
@@ -691,7 +682,7 @@
                     <span>Source</span>
                     <span style="text-align:right">Time</span>
                 </div>
-                ${rows}
+                <div class="activity-feed">${rows}</div>
             </div>`;
 
         } catch(e) {
@@ -699,13 +690,17 @@
         }
     }
 
+    /* timeAgo — treats server timestamp as UTC, converts to local */
     function timeAgo(isoString) {
         if (!isoString) return '—';
-        const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+        // Append 'Z' if missing so JS parses as UTC
+        const utcStr = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+        const diff   = Math.floor((Date.now() - new Date(utcStr).getTime()) / 1000);
+        if (diff < 0)     return 'just now';
         if (diff < 60)    return diff + 's ago';
-        if (diff < 3600)  return Math.floor(diff/60) + 'm ago';
-        if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-        return Math.floor(diff/86400) + 'd ago';
+        if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
     }
 
     /* DEVICE CARDS */
@@ -713,7 +708,7 @@
         const c = document.getElementById(cid);
         c.innerHTML = '<div class="st-loading">⟳ Loading devices...</div>';
         try {
-            const res = await fetch(`${API}/api/devices?adminId=${adminId}`);
+            const res     = await fetch(`${API}/api/devices?adminId=${adminId}`);
             const devices = await res.json();
             if (!devices.length) { c.innerHTML = '<div class="st-empty">No devices enrolled yet</div>'; return; }
             c.innerHTML = `<div class="cards-grid">${devices.map(d => `
@@ -744,7 +739,7 @@
         } catch(e) { document.getElementById('infoGrid').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
     }
 
-    /* APP INVENTORY SLIDE-IN PANEL */
+    /* APP INVENTORY PANEL */
     async function viewApps(deviceId) {
         document.getElementById('apPanelSubtitle').textContent = deviceId;
         document.getElementById('apStatTotal').textContent = '—';
@@ -752,14 +747,13 @@
         document.getElementById('apStatUsr').textContent   = '—';
         document.getElementById('apBody').innerHTML = '<div class="ap-state">⟳ Loading apps...</div>';
         document.getElementById('apSearchInput').value = '';
-        apFilter = 'all';
-        setFilter('all', false);
+        apFilter = 'all'; setFilter('all', false);
         document.getElementById('appsScrim').classList.add('on');
         document.getElementById('appsPanel').classList.add('open');
         document.body.style.overflow = 'hidden';
         try {
             const res = await fetch(`${API}/api/devices/${deviceId}/apps`);
-            allApps = await res.json();
+            allApps   = await res.json();
             if (!allApps.length) { document.getElementById('apBody').innerHTML = '<div class="ap-state">⚠ No apps found. Open app → Sync App Inventory</div>'; return; }
             const sys  = allApps.filter(a => a.isSystemApp).length;
             const user = allApps.filter(a => !a.isSystemApp).length;
@@ -783,18 +777,14 @@
         document.getElementById('fbSys').classList.toggle('active', f === 'sys');
         if (doRender) renderApps();
     }
-
     function applyFilter() { renderApps(); }
 
     function renderApps() {
-        const q = (document.getElementById('apSearchInput').value || '').toLowerCase();
-        let list = allApps;
+        const q    = (document.getElementById('apSearchInput').value || '').toLowerCase();
+        let list   = allApps;
         if (apFilter === 'user') list = list.filter(a => !a.isSystemApp);
         if (apFilter === 'sys')  list = list.filter(a =>  a.isSystemApp);
-        if (q) list = list.filter(a =>
-            (a.appName||'').toLowerCase().includes(q) ||
-            (a.packageName||'').toLowerCase().includes(q)
-        );
+        if (q) list = list.filter(a => (a.appName||'').toLowerCase().includes(q) || (a.packageName||'').toLowerCase().includes(q));
         if (!list.length) { document.getElementById('apBody').innerHTML = '<div class="ap-state">No apps match your filter</div>'; return; }
         document.getElementById('apBody').innerHTML =
             `<div class="ap-row-head">
@@ -806,11 +796,11 @@
              </div>` +
             list.map(a => `
             <div class="ap-row">
-                <div class="ap-app-name">${a.appName || 'N/A'}</div>
-                <div class="ap-pkg">${a.packageName || 'N/A'}</div>
-                <div class="ap-ver">${a.versionName || 'N/A'}</div>
-                <div><span class="ap-badge ${a.isSystemApp ? 'ap-badge-sys' : 'ap-badge-usr'}">${a.isSystemApp ? 'SYS' : 'USER'}</span></div>
-                <div class="ap-src">${a.installSource || 'N/A'}</div>
+                <div class="ap-app-name">${a.appName||'N/A'}</div>
+                <div class="ap-pkg">${a.packageName||'N/A'}</div>
+                <div class="ap-ver">${a.versionName||'N/A'}</div>
+                <div><span class="ap-badge ${a.isSystemApp?'ap-badge-sys':'ap-badge-usr'}">${a.isSystemApp?'SYS':'USER'}</span></div>
+                <div class="ap-src">${a.installSource||'N/A'}</div>
             </div>`).join('');
     }
 
@@ -821,7 +811,7 @@
         const c = document.getElementById('tokensList');
         c.innerHTML = '<div class="st-loading">⟳ Loading tokens...</div>';
         try {
-            const res = await fetch(`${API}/api/tokens?adminId=${adminId}`);
+            const res    = await fetch(`${API}/api/tokens?adminId=${adminId}`);
             const tokens = await res.json();
             if (!tokens.length) { c.innerHTML = '<div class="st-empty">No tokens yet. Create one above!</div>'; return; }
             c.innerHTML = `<table class="tbl"><thead><tr><th>Token</th><th>Label</th><th>Status</th><th>Uses</th><th>Created</th><th>Actions</th></tr></thead><tbody>${tokens.map(t => `
@@ -846,10 +836,7 @@
         const msgEl   = document.getElementById('tokenMsg');
         if (!label) { msgEl.innerHTML = '<div class="st-err">⚠ Please enter a token label!</div>'; return; }
         try {
-            const res = await fetch(`${API}/api/tokens`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ token: token||null, label, maxUses: parseInt(maxUses), adminId: adminId })
-            });
+            const res = await fetch(`${API}/api/tokens`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({token:token||null,label,maxUses:parseInt(maxUses),adminId}) });
             if (res.ok) {
                 const created = await res.json();
                 msgEl.innerHTML = `<div class="st-ok">✅ Token created: ${created.token}</div>`;
