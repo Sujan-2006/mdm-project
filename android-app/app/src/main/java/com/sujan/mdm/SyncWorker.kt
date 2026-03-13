@@ -35,35 +35,43 @@ class SyncWorker(
                     packageName   = pkg.packageName,
                     versionName   = pkg.versionName ?: "N/A",
                     versionCode   = pkg.versionCode,
-                    isSystemApp   = (appInfo.flags and
-                            ApplicationInfo.FLAG_SYSTEM) != 0,
+                    isSystemApp   = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
                     installSource = try {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             pm.getInstallSourceInfo(pkg.packageName)
                                 .installingPackageName ?: "Unknown"
                         } else {
                             @Suppress("DEPRECATION")
-                            pm.getInstallerPackageName(pkg.packageName)
-                                ?: "Unknown"
+                            pm.getInstallerPackageName(pkg.packageName) ?: "Unknown"
                         }
                     } catch (e: Exception) { "Unknown" }
                 )
             }
 
-            // ── Compare with previously saved package list ────────────────
             val currentPackages = apps.map { it.packageName }.toSet()
 
-            // Load previously saved package list from SharedPrefs
+            // ── Load previously saved data ────────────────────────────────
             val savedPackagesRaw = prefs.getString("saved_package_list", "") ?: ""
-            val savedPackages    = if (savedPackagesRaw.isEmpty()) emptySet()
+            val isFirstRun       = savedPackagesRaw.isEmpty()
+            val savedPackages    = if (isFirstRun) emptySet()
             else savedPackagesRaw.split(",").toSet()
 
-            // Detect installs and uninstalls
+            // Load saved app name map: "pkg=AppName||pkg2=AppName2||..."
+            val savedNameMapRaw = prefs.getString("saved_app_name_map", "") ?: ""
+            val savedNameMap    = mutableMapOf<String, String>()
+            if (savedNameMapRaw.isNotEmpty()) {
+                savedNameMapRaw.split("||").forEach { entry ->
+                    val idx = entry.indexOf('=')
+                    if (idx > 0) savedNameMap[entry.substring(0, idx)] = entry.substring(idx + 1)
+                }
+            }
+
+            // ── Detect installs and uninstalls ────────────────────────────
             val newlyInstalled   = currentPackages - savedPackages
             val newlyUninstalled = savedPackages   - currentPackages
 
-            // ── Post activity log for each change ────────────────────────
-            if (adminId != -1L &&
+            // ── Post activity log — SKIP on first run to avoid flood ──────
+            if (!isFirstRun && adminId != -1L &&
                 (newlyInstalled.isNotEmpty() || newlyUninstalled.isNotEmpty())) {
 
                 val client = OkHttpClient()
@@ -71,58 +79,53 @@ class SyncWorker(
                 // Log installed apps
                 for (pkg in newlyInstalled) {
                     val appItem = apps.find { it.packageName == pkg }
-                    val json = JSONObject().apply {
-                        put("deviceId",      deviceId)
-                        put("adminId",       adminId)
-                        put("model",         Build.MODEL)
-                        put("manufacturer",  Build.MANUFACTURER)
-                        put("appName",       appItem?.appName ?: pkg)
-                        put("packageName",   pkg)
-                        put("installSource", appItem?.installSource ?: "Unknown")
-                        put("action",        "INSTALLED")
-                    }
                     try {
-                        val body = json.toString()
-                            .toRequestBody("application/json".toMediaType())
+                        val json = JSONObject().apply {
+                            put("deviceId",      deviceId)
+                            put("adminId",       adminId)
+                            put("model",         Build.MODEL)
+                            put("manufacturer",  Build.MANUFACTURER)
+                            put("appName",       appItem?.appName ?: pkg)
+                            put("packageName",   pkg)
+                            put("installSource", appItem?.installSource ?: "Unknown")
+                            put("action",        "INSTALLED")
+                        }
+                        val body = json.toString().toRequestBody("application/json".toMediaType())
                         val req  = Request.Builder()
                             .url("https://mdm-project-production.up.railway.app/api/activity-log")
-                            .post(body)
-                            .build()
+                            .post(body).build()
                         client.newCall(req).execute().close()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    } catch (e: Exception) { e.printStackTrace() }
                 }
 
-                // Log uninstalled apps
+                // Log uninstalled apps — look up name from saved map
                 for (pkg in newlyUninstalled) {
-                    val json = JSONObject().apply {
-                        put("deviceId",      deviceId)
-                        put("adminId",       adminId)
-                        put("model",         Build.MODEL)
-                        put("manufacturer",  Build.MANUFACTURER)
-                        put("appName",       pkg)   // name not available after uninstall
-                        put("packageName",   pkg)
-                        put("installSource", "N/A")
-                        put("action",        "UNINSTALLED")
-                    }
+                    val knownName = savedNameMap[pkg] ?: pkg
                     try {
-                        val body = json.toString()
-                            .toRequestBody("application/json".toMediaType())
+                        val json = JSONObject().apply {
+                            put("deviceId",      deviceId)
+                            put("adminId",       adminId)
+                            put("model",         Build.MODEL)
+                            put("manufacturer",  Build.MANUFACTURER)
+                            put("appName",       knownName)
+                            put("packageName",   pkg)
+                            put("installSource", "N/A")
+                            put("action",        "UNINSTALLED")
+                        }
+                        val body = json.toString().toRequestBody("application/json".toMediaType())
                         val req  = Request.Builder()
                             .url("https://mdm-project-production.up.railway.app/api/activity-log")
-                            .post(body)
-                            .build()
+                            .post(body).build()
                         client.newCall(req).execute().close()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    } catch (e: Exception) { e.printStackTrace() }
                 }
             }
 
-            // ── Save current package list for next comparison ─────────────
+            // ── Save current package list and name map for next run ───────
+            val newNameMap = apps.joinToString("||") { "${it.packageName}=${it.appName}" }
             prefs.edit()
                 .putString("saved_package_list", currentPackages.joinToString(","))
+                .putString("saved_app_name_map", newNameMap)
                 .apply()
 
             // ── Sync full inventory to backend ────────────────────────────
