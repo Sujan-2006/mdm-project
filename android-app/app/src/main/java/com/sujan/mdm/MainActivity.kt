@@ -73,6 +73,15 @@ class MainActivity : AppCompatActivity() {
         checkDeviceOwnerStatus()
         restoreAppCounts()
 
+        // ── KEY FIX: If device is already enrolled but adminId was never saved
+        //    (old APK users), fetch it automatically from server on every startup.
+        //    Works for ANY admin — no hardcoding. ──
+        val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+        if (prefs.getBoolean("is_enrolled", false) &&
+            prefs.getLong("admin_id", -1L) == -1L) {
+            fetchAndSaveAdminId()
+        }
+
         val filter = IntentFilter("com.sujan.mdm.APP_COUNT_UPDATED")
         ContextCompat.registerReceiver(
             this,
@@ -82,8 +91,8 @@ class MainActivity : AppCompatActivity() {
         )
 
         btnEnroll.setOnClickListener {
-            val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-            if (prefs.getBoolean("is_enrolled", false)) {
+            val p = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+            if (p.getBoolean("is_enrolled", false)) {
                 tvSyncStatus.text = "✅ Device already enrolled!"
                 return@setOnClickListener
             }
@@ -96,8 +105,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnCollectInfo.setOnClickListener {
-            val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-            if (prefs.getBoolean("info_collected", false)) {
+            val p = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+            if (p.getBoolean("info_collected", false)) {
                 tvSyncStatus.text = "✅ Device info already sent!"
                 return@setOnClickListener
             }
@@ -203,6 +212,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Fetches adminId from server and saves it to SharedPrefs ──
+    // Called on startup if enrolled but adminId missing (old APK users)
+    // Also called after fresh enrollment
+    // Works dynamically for ANY admin — no hardcoding ──
+    private fun fetchAndSaveAdminId() {
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getAdminIdForDevice(deviceId)
+                if (res.isSuccessful) {
+                    val id = res.body()?.adminId ?: return@launch
+                    getSharedPreferences("mdm_prefs", MODE_PRIVATE)
+                        .edit().putLong("admin_id", id).apply()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     private fun enrollDevice(token: String) {
         lifecycleScope.launch {
             try {
@@ -212,27 +240,13 @@ class MainActivity : AppCompatActivity() {
                 val response = RetrofitClient.instance.enroll(EnrollRequest(deviceId, token))
 
                 if (response.isSuccessful) {
-
-                    // ── Fetch adminId dynamically from the server ──────────────
-                    // We call /api/devices and find THIS device in the list.
-                    // The device object contains adminId — works for ANY admin account.
-                    var resolvedAdminId = -1L
-                    try {
-                        // We don't know the adminId yet, so we hit the lookup endpoint
-                        // /api/device-admin?deviceId=xxx which returns just the adminId
-                        val adminRes = RetrofitClient.instance.getAdminIdForDevice(deviceId)
-                        if (adminRes.isSuccessful) {
-                            resolvedAdminId = adminRes.body()?.adminId ?: -1L
-                        }
-                    } catch (e: Exception) {
-                        // Fallback: will try again on next launch via fetchAndSaveAdminId()
-                        e.printStackTrace()
-                    }
-
+                    // Save enrolled flag first
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()
                         .putBoolean("is_enrolled", true)
-                        .putLong("admin_id", resolvedAdminId)
                         .apply()
+
+                    // Now fetch adminId dynamically — works for ANY admin
+                    fetchAndSaveAdminId()
 
                     tvStatus.text = "🟢 Status: Enrolled ✅"
                     tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
@@ -254,7 +268,6 @@ class MainActivity : AppCompatActivity() {
                     if (errorMsg.contains("already enrolled")) {
                         getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                             .edit().putBoolean("is_enrolled", true).apply()
-                        // Try to resolve adminId even for already-enrolled devices
                         fetchAndSaveAdminId()
                         checkEnrollmentStatus()
                         tvSyncStatus.text = "✅ Device already enrolled!"
@@ -266,22 +279,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 tvStatus.text     = "🔴 Status: Connection Error"
                 tvSyncStatus.text = "❌ Error: ${e.message}\n\nCheck internet connection!"
-            }
-        }
-    }
-
-    // ── Called for already-enrolled devices to resolve & save adminId ──
-    private fun fetchAndSaveAdminId() {
-        lifecycleScope.launch {
-            try {
-                val res = RetrofitClient.instance.getAdminIdForDevice(deviceId)
-                if (res.isSuccessful) {
-                    val id = res.body()?.adminId ?: return@launch
-                    getSharedPreferences("mdm_prefs", MODE_PRIVATE)
-                        .edit().putLong("admin_id", id).apply()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
