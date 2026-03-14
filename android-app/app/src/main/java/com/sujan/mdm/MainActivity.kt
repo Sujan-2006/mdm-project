@@ -363,20 +363,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun scheduleBackgroundSync() {
-        val syncRequest = androidx.work.PeriodicWorkRequestBuilder<SyncWorker>(
-            15, java.util.concurrent.TimeUnit.MINUTES
-        ).setConstraints(
-            androidx.work.Constraints.Builder()
-                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
-                .build()
-        ).setInitialDelay(15, java.util.concurrent.TimeUnit.MINUTES).build()
+        val wm = androidx.work.WorkManager.getInstance(this)
+        val constraints = androidx.work.Constraints.Builder()
+            .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+            .build()
 
-        androidx.work.WorkManager.getInstance(this)
-            .enqueueUniquePeriodicWork(
-                "mdm_sync",
-                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-                syncRequest
-            )
+        // 1. Immediate one-time sync every time the app is opened
+        val immediateSync = androidx.work.OneTimeWorkRequestBuilder<SyncWorker>()
+            .setConstraints(constraints)
+            .build()
+        wm.enqueueUniqueWork(
+            "mdm_sync_now",
+            androidx.work.ExistingWorkPolicy.REPLACE,
+            immediateSync
+        )
+
+        // 2. Periodic background sync every 15 minutes
+        val periodicSync = androidx.work.PeriodicWorkRequestBuilder<SyncWorker>(
+            15, java.util.concurrent.TimeUnit.MINUTES
+        ).setConstraints(constraints).build()
+
+        wm.enqueueUniquePeriodicWork(
+            "mdm_sync",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            periodicSync
+        )
     }
 
     private fun handleProvisioningIntent() {

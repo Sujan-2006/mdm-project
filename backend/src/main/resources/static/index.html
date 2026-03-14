@@ -263,7 +263,7 @@
         .loc-card-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
         .loc-card-coords{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent);margin-bottom:2px;}
         .loc-card-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-        #map{flex:1;margin:0 28px 28px;border-radius:12px;border:1px solid var(--border);min-height:0;}
+        #map{flex:1;margin:0 28px 28px;border-radius:12px;border:1px solid var(--border);min-height:320px;}
     </style>
 </head>
 <body>
@@ -758,23 +758,50 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAppsPanel(); });
 
     /* LOCATION MAP */
+    function initMap(callback) {
+        // Always destroy old map instance so Leaflet re-measures the div freshly
+        if (leafletMap) {
+            leafletMap.remove();
+            leafletMap = null;
+            mapMarkers = [];
+        }
+        // Double rAF ensures the flex layout has fully painted before Leaflet reads the div size
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const mapEl = document.getElementById('map');
+                if (!mapEl || mapEl.offsetHeight < 10) {
+                    // Fallback: force an explicit height in case flex hasn't resolved yet
+                    mapEl.style.height = '400px';
+                }
+                leafletMap = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(leafletMap);
+                leafletMap.invalidateSize();
+                if (callback) callback();
+            });
+        });
+    }
+
     async function loadLocationMap() {
         const listEl = document.getElementById('locationDeviceList');
         listEl.innerHTML = '<div class="st-loading" style="padding:12px 0">⟳ Loading...</div>';
-        if (!leafletMap) {
-            leafletMap = L.map('map').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(leafletMap);
-        }
-        setTimeout(() => leafletMap.invalidateSize(), 100);
-        mapMarkers.forEach(m => leafletMap.removeLayer(m));
-        mapMarkers = [];
+
+        // Fetch data first, then init map with data ready
+        let locations = [];
         try {
-            const res       = await fetch(`${API}/api/device-locations?adminId=${adminId}`);
-            const locations = await res.json();
+            const res = await fetch(`${API}/api/device-locations?adminId=${adminId}`);
+            locations = await res.json();
+        } catch(e) {
+            listEl.innerHTML = `<div class="st-err">❌ Failed to load: ${e.message}</div>`;
+            initMap(null);
+            return;
+        }
+
+        initMap(() => {
             if (!locations.length) {
-                listEl.innerHTML = `<div style="padding:8px 0;font-size:12px;font-family:monospace;color:var(--muted)">📍 No location data yet — wait for next sync (15 mins)</div>`;
+                listEl.innerHTML = `<div style="padding:8px 0;font-size:12px;font-family:monospace;color:var(--muted)">📍 No location data yet — open the MDM app on your phone and wait up to 15 mins for WorkManager to sync</div>`;
                 return;
             }
             const bounds = [];
@@ -793,13 +820,15 @@
                 mapMarkers.push(marker);
                 bounds.push([loc.latitude, loc.longitude]);
             });
-            if (bounds.length > 0) leafletMap.fitBounds(bounds, { padding: [40, 40] });
-        } catch(e) {
-            listEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
-        }
+            if (bounds.length > 0) {
+                leafletMap.invalidateSize();
+                leafletMap.fitBounds(bounds, { padding: [40, 40] });
+            }
+        });
     }
 
     function flyToDevice(lat, lng) {
+        if (!leafletMap) return;
         leafletMap.flyTo([lat, lng], 15, { animate: true, duration: 1.5 });
         mapMarkers.forEach(m => {
             const pos = m.getLatLng();
