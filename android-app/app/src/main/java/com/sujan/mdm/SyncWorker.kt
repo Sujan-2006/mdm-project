@@ -148,7 +148,9 @@ class SyncWorker(
             // ── Send location to backend ──────────────────────────────────
             if (adminId != -1L) {
                 try {
+                    android.util.Log.d("SyncWorker", "Fetching location for deviceId=$deviceId adminId=$adminId")
                     val location = getLastLocation()
+                    android.util.Log.d("SyncWorker", "Location result: $location")
                     if (location != null) {
                         RetrofitClient.instance.sendLocation(
                             com.sujan.mdm.LocationRequest(
@@ -177,40 +179,64 @@ class SyncWorker(
 
     @SuppressLint("MissingPermission")
     private suspend fun getLastLocation(): Location? {
-        return withTimeoutOrNull(10_000L) {
+        // Check permissions before attempting — returns null cleanly if not granted
+        val fineOk = androidx.core.content.ContextCompat.checkSelfPermission(
+            applicationContext, android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val coarseOk = androidx.core.content.ContextCompat.checkSelfPermission(
+            applicationContext, android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (!fineOk && !coarseOk) {
+            android.util.Log.w("SyncWorker", "Location permission not granted — skipping location")
+            return null
+        }
+
+        return withTimeoutOrNull(15_000L) {
             suspendCancellableCoroutine { cont ->
                 val fusedClient = LocationServices.getFusedLocationProviderClient(applicationContext)
 
-                fusedClient.lastLocation.addOnSuccessListener { location ->
-                    if (location != null) {
-                        cont.resume(location)
-                        return@addOnSuccessListener
-                    }
+                // Try lastLocation first (fast, no battery cost)
+                fusedClient.lastLocation
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            android.util.Log.d("SyncWorker", "Got lastLocation: ${location.latitude}, ${location.longitude}")
+                            if (cont.isActive) cont.resume(location)
+                            return@addOnSuccessListener
+                        }
+                        // lastLocation was null — request a fresh one
+                        android.util.Log.d("SyncWorker", "lastLocation null, requesting fresh location...")
+                        val locationRequest = LocationRequest.Builder(
+                            Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L
+                        ).setMaxUpdates(1).build()
 
-                    val locationRequest = LocationRequest.Builder(
-                        Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L
-                    ).setMaxUpdates(1).build()
-
-                    val callback = object : LocationCallback() {
-                        override fun onLocationResult(result: LocationResult) {
-                            fusedClient.removeLocationUpdates(this)
-                            cont.resume(result.lastLocation)
+                        val callback = object : LocationCallback() {
+                            override fun onLocationResult(result: LocationResult) {
+                                fusedClient.removeLocationUpdates(this)
+                                val loc = result.lastLocation
+                                android.util.Log.d("SyncWorker", "Fresh location: ${loc?.latitude}, ${loc?.longitude}")
+                                if (cont.isActive) cont.resume(loc)
+                            }
+                        }
+                        try {
+                            // Use a HandlerThread so we are not blocked by main looper
+                            val handlerThread = android.os.HandlerThread("loc-worker")
+                            handlerThread.start()
+                            val looper = handlerThread.looper
+                            fusedClient.requestLocationUpdates(locationRequest, callback, looper)
+                            cont.invokeOnCancellation {
+                                fusedClient.removeLocationUpdates(callback)
+                                handlerThread.quitSafely()
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("SyncWorker", "requestLocationUpdates failed: ${e.message}")
+                            if (cont.isActive) cont.resume(null)
                         }
                     }
-
-                    try {
-                        fusedClient.requestLocationUpdates(
-                            locationRequest, callback, Looper.getMainLooper()
-                        )
-                        cont.invokeOnCancellation {
-                            fusedClient.removeLocationUpdates(callback)
-                        }
-                    } catch (e: Exception) {
-                        cont.resume(null)
+                    .addOnFailureListener { e ->
+                        android.util.Log.e("SyncWorker", "lastLocation failed: ${e.message}")
+                        if (cont.isActive) cont.resume(null)
                     }
-                }.addOnFailureListener {
-                    cont.resume(null)
-                }
             }
         }
     }

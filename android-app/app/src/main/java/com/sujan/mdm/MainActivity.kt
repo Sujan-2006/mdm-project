@@ -41,7 +41,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adminComponent: ComponentName
 
     companion object {
-        private const val LOCATION_PERMISSION_REQUEST = 1001
+        private const val LOCATION_PERMISSION_REQUEST    = 1001
+        private const val BACKGROUND_LOCATION_REQUEST    = 1002
     }
 
     private val deviceId: String by lazy {
@@ -124,11 +125,12 @@ class MainActivity : AppCompatActivity() {
 
     // ── Request Location Permission ───────────────────────────────────────
     private fun requestLocationPermission() {
-        val fineLocation   = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-        val coarseLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+        val fineGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-        if (fineLocation != PackageManager.PERMISSION_GRANTED ||
-            coarseLocation != PackageManager.PERMISSION_GRANTED) {
+        if (!fineGranted || !coarseGranted) {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(
@@ -137,6 +139,22 @@ class MainActivity : AppCompatActivity() {
                 ),
                 LOCATION_PERMISSION_REQUEST
             )
+        } else {
+            requestBackgroundLocationIfNeeded()
+        }
+    }
+
+    private fun requestBackgroundLocationIfNeeded() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val bgGranted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+            if (!bgGranted) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                    BACKGROUND_LOCATION_REQUEST
+                )
+            }
         }
     }
 
@@ -146,10 +164,17 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST) {
-            if (grantResults.isNotEmpty() &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                tvSyncStatus.text = "📍 Location permission granted!"
+        when (requestCode) {
+            LOCATION_PERMISSION_REQUEST -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    tvSyncStatus.text = "📍 Location permission granted!"
+                    requestBackgroundLocationIfNeeded()
+                }
+            }
+            BACKGROUND_LOCATION_REQUEST -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    tvSyncStatus.text = "📍 Background location granted! Location tracking active."
+                }
             }
         }
     }
