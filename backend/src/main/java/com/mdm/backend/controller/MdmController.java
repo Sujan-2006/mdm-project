@@ -48,6 +48,7 @@ public class MdmController {
 
             device.setAdminId(token.getAdminId());
             device.setEnrolledAt(LocalDateTime.now());
+            device.setLastSeen(LocalDateTime.now());
             enrolledDeviceRepository.save(device);
             token.setCurrentUses(token.getCurrentUses() + 1);
             enrollmentTokenRepository.save(token);
@@ -70,7 +71,22 @@ public class MdmController {
         String deviceId = apps.get(0).getDeviceId();
         appInventoryRepository.deleteByDeviceId(deviceId);
         appInventoryRepository.saveAll(apps);
+        // Update lastSeen when device syncs app inventory
+        enrolledDeviceRepository.findByDeviceId(deviceId).ifPresent(device -> {
+            device.setLastSeen(LocalDateTime.now());
+            enrolledDeviceRepository.save(device);
+        });
         return ResponseEntity.ok("App inventory saved");
+    }
+
+    // ── Ping endpoint — updates lastSeen timestamp ──
+    @PostMapping("/api/device-ping")
+    public ResponseEntity<?> devicePing(@RequestParam String deviceId) {
+        return enrolledDeviceRepository.findByDeviceId(deviceId).map(device -> {
+            device.setLastSeen(LocalDateTime.now());
+            enrolledDeviceRepository.save(device);
+            return ResponseEntity.ok("pong");
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // ── Location endpoints ──
@@ -78,19 +94,22 @@ public class MdmController {
     public ResponseEntity<?> saveLocation(@RequestBody DeviceLocation location) {
         location.setTimestamp(LocalDateTime.now());
         deviceLocationRepository.save(location);
+        // Also update lastSeen when location is sent
+        enrolledDeviceRepository.findByDeviceId(location.getDeviceId()).ifPresent(device -> {
+            device.setLastSeen(LocalDateTime.now());
+            enrolledDeviceRepository.save(device);
+        });
         return ResponseEntity.ok("Location saved");
     }
 
     @GetMapping("/api/device-locations")
     public ResponseEntity<List<DeviceLocation>> getLocations(@RequestParam Long adminId) {
-        return ResponseEntity.ok(
-                deviceLocationRepository.findLatestLocationPerDevice(adminId));
+        return ResponseEntity.ok(deviceLocationRepository.findLatestLocationPerDevice(adminId));
     }
 
     @GetMapping("/api/device-location/{deviceId}")
     public ResponseEntity<?> getDeviceLocation(@PathVariable String deviceId) {
-        return deviceLocationRepository
-                .findTopByDeviceIdOrderByTimestampDesc(deviceId)
+        return deviceLocationRepository.findTopByDeviceIdOrderByTimestampDesc(deviceId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

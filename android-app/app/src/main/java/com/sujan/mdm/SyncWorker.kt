@@ -136,6 +136,15 @@ class SyncWorker(
                 .putString("saved_app_name_map", newNameMap)
                 .apply()
 
+            // ── Ping backend to update lastSeen timestamp ─────────────────
+            try {
+                val pingReq = Request.Builder()
+                    .url("https://mdm-project-production.up.railway.app/api/device-ping?deviceId=$deviceId")
+                    .post("".toRequestBody(null))
+                    .build()
+                OkHttpClient().newCall(pingReq).execute().close()
+            } catch (e: Exception) { e.printStackTrace() }
+
             // ── Send location to backend ──────────────────────────────────
             if (adminId != -1L) {
                 try {
@@ -153,9 +162,7 @@ class SyncWorker(
                             )
                         )
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                } catch (e: Exception) { e.printStackTrace() }
             }
 
             // ── Sync full inventory to backend ────────────────────────────
@@ -174,14 +181,12 @@ class SyncWorker(
             suspendCancellableCoroutine { cont ->
                 val fusedClient = LocationServices.getFusedLocationProviderClient(applicationContext)
 
-                // First try last known location (fast)
                 fusedClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null) {
                         cont.resume(location)
                         return@addOnSuccessListener
                     }
 
-                    // If no last location, request a fresh one
                     val locationRequest = LocationRequest.Builder(
                         Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L
                     ).setMaxUpdates(1).build()

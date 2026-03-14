@@ -22,4 +22,8 @@ public class EnrolledDevice {
 
     @Column(name = "admin_id")
     private Long adminId;
+
+    // Updated every time the device syncs — used for online/offline status
+    @Column(name = "last_seen")
+    private LocalDateTime lastSeen;
 }

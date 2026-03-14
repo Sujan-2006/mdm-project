@@ -67,8 +67,6 @@
         .dot-text{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
         .refresh-indicator{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--green);display:flex;align-items:center;gap:6px;}
         .refresh-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;}
-
-        /* MAIN LAYOUT — key fix: main fills remaining height */
         .main{flex:1;display:flex;flex-direction:column;overflow:hidden;height:100vh;}
         .topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0;box-shadow:0 2px 8px var(--shadow);}
         .topbar-title{font-size:15px;font-weight:700;flex:1;}
@@ -77,25 +75,13 @@
         .topbar-btn:hover{background:rgba(79,142,247,.2);}
         .logout-btn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:var(--red);padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;transition:all .15s;}
         .logout-btn:hover{background:rgba(239,68,68,.18);}
-
-        /* content area — scrollable for normal pages */
         .content{flex:1;overflow-y:auto;padding:28px;overflow-x:hidden;}
         .content::-webkit-scrollbar{width:4px;}
         .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-
-        /* pages */
         .page{display:none;}
         .page.active{display:block;}
-
-        /* Location page — NO padding, fills full content area */
-        .page-location-wrap{
-            display:none;
-            flex-direction:column;
-            height:100%;
-            overflow:hidden;
-        }
+        .page-location-wrap{display:none;flex-direction:column;height:100%;overflow:hidden;}
         .page-location-wrap.active{display:flex;}
-
         .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
         .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;position:relative;overflow:hidden;transition:all .3s;box-shadow:0 2px 8px var(--shadow);}
         .stat-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px var(--shadow);}
@@ -134,21 +120,34 @@
         .al-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:right;white-space:nowrap;}
         .al-empty{text-align:center;padding:40px 28px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);}
         .al-empty-ico{font-size:32px;margin-bottom:10px;}
+
+        /* ═══ DEVICE CARDS ═══ */
         .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
         .dcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .2s;box-shadow:0 2px 8px var(--shadow);}
         .dcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px var(--shadow);}
-        .dcard-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+        .dcard-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
         .dcard-icon{width:40px;height:40px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-        .badge-ok{background:rgba(16,217,126,.1);border:1px solid rgba(16,217,126,.3);color:var(--green);padding:3px 10px;border-radius:20px;font-size:10px;font-family:'JetBrains Mono',monospace;}
+
+        /* Online/Offline badge */
+        .badge-online{background:rgba(16,217,126,.1);border:1px solid rgba(16,217,126,.3);color:var(--green);padding:3px 10px;border-radius:20px;font-size:10px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:4px;}
+        .badge-offline{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:var(--red);padding:3px 10px;border-radius:20px;font-size:10px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:4px;}
+        .badge-unknown{background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.3);color:var(--muted);padding:3px 10px;border-radius:20px;font-size:10px;font-family:'JetBrains Mono',monospace;}
+        .online-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
+        .offline-dot{width:6px;height:6px;border-radius:50%;background:var(--red);}
+
+        /* Last seen row */
+        .dcard-lastseen{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);}
+
         .dcard-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:3px;}
         .dcard-id span{color:var(--accent);}
-        .dcard-meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.7;margin-bottom:16px;}
+        .dcard-meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.7;margin-bottom:14px;}
         .dcard-btns{display:flex;gap:8px;flex-wrap:wrap;}
         .dcard-btn{flex:1;padding:8px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:'Syne',sans-serif;font-weight:600;transition:all .15s;}
         .dcard-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.05);}
         .dcard-btn.v2:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(124,58,237,.05);}
         .dcard-btn.del{border-color:rgba(239,68,68,.3);color:var(--red);}
         .dcard-btn.del:hover{border-color:var(--red);background:rgba(239,68,68,.08);}
+
         .overlay{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:100;backdrop-filter:blur(6px);align-items:center;justify-content:center;}
         .overlay.on{display:flex;}
         .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:90%;max-width:820px;max-height:88vh;overflow-y:auto;padding:28px;animation:up .2s ease;box-shadow:0 24px 64px var(--shadow);}
@@ -253,49 +252,18 @@
         .st-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 16px;color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
         .st-ok{background:rgba(16,217,126,.08);border:1px solid rgba(16,217,126,.2);border-radius:8px;padding:12px 16px;color:var(--green);font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
 
-        /* ═══ LOCATION MAP — fills remaining height perfectly ═══ */
-        .loc-header{
-            padding:20px 28px 14px;
-            flex-shrink:0;
-            display:flex;
-            align-items:center;
-            gap:8px;
-        }
+        /* ═══ LOCATION MAP ═══ */
+        .loc-header{padding:20px 28px 14px;flex-shrink:0;display:flex;align-items:center;gap:8px;}
         .loc-header .sec-hdr{margin-bottom:0;}
-
-        /* device cards strip above map */
-        .loc-device-strip{
-            display:flex;
-            gap:10px;
-            overflow-x:auto;
-            padding:0 28px 12px;
-            flex-shrink:0;
-        }
+        .loc-device-strip{display:flex;gap:10px;overflow-x:auto;padding:0 28px 12px;flex-shrink:0;}
         .loc-device-strip::-webkit-scrollbar{height:4px;}
         .loc-device-strip::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-        .loc-card{
-            min-width:200px;
-            background:var(--surface);
-            border:1px solid var(--border);
-            border-radius:10px;
-            padding:12px 14px;
-            cursor:pointer;
-            transition:all .2s;
-            flex-shrink:0;
-        }
+        .loc-card{min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s;flex-shrink:0;}
         .loc-card:hover{border-color:var(--accent);transform:translateY(-1px);}
         .loc-card-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
         .loc-card-coords{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent);margin-bottom:2px;}
         .loc-card-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-
-        /* map fills ALL remaining height */
-        #map{
-            flex:1;
-            margin:0 28px 28px;
-            border-radius:12px;
-            border:1px solid var(--border);
-            min-height:0; /* critical for flex child */
-        }
+        #map{flex:1;margin:0 28px 28px;border-radius:12px;border:1px solid var(--border);min-height:0;}
     </style>
 </head>
 <body>
@@ -357,7 +325,7 @@
         </div>
     </aside>
 
-    <div class="main" id="mainArea">
+    <div class="main">
         <div class="topbar">
             <div class="topbar-title" id="pageTitle">Dashboard</div>
             <div class="topbar-clock" id="clock"></div>
@@ -374,7 +342,7 @@
             <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
         </div>
 
-        <!-- Normal scrollable content for most pages -->
+        <!-- Normal scrollable content -->
         <div class="content" id="normalContent">
             <div class="page active" id="page-dashboard">
                 <div class="stats-row">
@@ -415,7 +383,7 @@
                         <div class="fgrp"><label class="flbl">Enrollment Token</label><input class="finp" type="text" id="qrToken" value="MDM_TOKEN_2024"></div>
                         <div class="fgrp"><label class="flbl">WiFi SSID</label><input class="finp" type="text" id="qrWifi" placeholder="Network name"></div>
                         <div class="fgrp"><label class="flbl">WiFi Password</label><input class="finp" type="password" id="qrWifiPass" placeholder="••••••••"></div>
-                        <div class="fgrp"><label class="flbl">APK Download URL</label><input class="finp" type="text" id="qrApkUrl" value="https://mdm-project-production.up.railway.app/apk/mdm.apk"></div>
+                        <div class="fgrp"><label class="flbl">APK Download URL</label><input class="finp" type="text" id="qrApkUrl" value="https://github.com/Sujan-2006/mdm-project/releases/download/v1.0/mdm-app-v1.0.apk"></div>
                         <button class="gen-btn" onclick="generateQR()">Generate QR Code →</button>
                     </div>
                     <div class="qr-out">
@@ -442,7 +410,7 @@
             </div>
         </div>
 
-        <!-- Location page — separate, fills full height, NO scroll -->
+        <!-- Location page — fills full height -->
         <div class="page-location-wrap" id="page-location">
             <div class="loc-header">
                 <div class="sec-hdr" style="margin-bottom:0">📍 Device Location Tracking</div>
@@ -588,23 +556,18 @@
         if (sid && snam) { adminId = parseInt(sid); adminUsername = snam; showDashboard(); }
     })();
 
-    /* ═══ NAVIGATION — location page is separate from normal content ═══ */
     function showPage(name, el) {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
         const t = { dashboard:'Dashboard', devices:'All Devices', location:'Device Location', tokens:'Token Management', qr:'QR Enrollment' };
         document.getElementById('pageTitle').textContent = t[name];
-
         if (name === 'location') {
-            // Hide normal content, show location wrap
             document.getElementById('normalContent').style.display = 'none';
             document.getElementById('page-location').classList.add('active');
             loadLocationMap();
         } else {
-            // Show normal content, hide location wrap
             document.getElementById('normalContent').style.display = 'block';
             document.getElementById('page-location').classList.remove('active');
-            // Switch active page inside normal content
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + name).classList.add('active');
             if (name === 'devices') renderCards('allCards');
@@ -665,63 +628,25 @@
         return Math.floor(diff / 86400) + 'd ago';
     }
 
-    /* ═══ LOCATION MAP ═══ */
-    async function loadLocationMap() {
-        const listEl = document.getElementById('locationDeviceList');
-        listEl.innerHTML = '<div class="st-loading" style="padding:12px 0">⟳ Loading locations...</div>';
-
-        if (!leafletMap) {
-            leafletMap = L.map('map').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(leafletMap);
-        }
-        // Invalidate size after show — fixes grey map issue
-        setTimeout(() => leafletMap.invalidateSize(), 100);
-
-        mapMarkers.forEach(m => leafletMap.removeLayer(m));
-        mapMarkers = [];
-
-        try {
-            const res       = await fetch(`${API}/api/device-locations?adminId=${adminId}`);
-            const locations = await res.json();
-
-            if (!locations.length) {
-                listEl.innerHTML = `<div style="padding:8px 0;font-size:12px;font-family:monospace;color:var(--muted)">📍 No location data yet — wait for next sync (15 mins)</div>`;
-                return;
-            }
-
-            const bounds = [];
-            listEl.innerHTML = locations.map(loc => `
-                <div class="loc-card" onclick="flyToDevice(${loc.latitude},${loc.longitude})">
-                    <div class="loc-card-name">📱 ${loc.model || 'Unknown'} (${loc.manufacturer || '—'})</div>
-                    <div class="loc-card-coords">📍 ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}</div>
-                    <div class="loc-card-time">🕐 ${timeAgo(loc.timestamp)} · ±${Math.round(loc.accuracy || 0)}m</div>
-                </div>`).join('');
-
-            locations.forEach(loc => {
-                const marker = L.marker([loc.latitude, loc.longitude])
-                    .addTo(leafletMap)
-                    .bindPopup(`<b>📱 ${loc.model || 'Unknown'}</b><br>${loc.manufacturer || ''}<br>
-                        📍 ${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}<br>
-                        🕐 ${timeAgo(loc.timestamp)}<br>±${Math.round(loc.accuracy || 0)}m accuracy`);
-                mapMarkers.push(marker);
-                bounds.push([loc.latitude, loc.longitude]);
-            });
-
-            if (bounds.length > 0) leafletMap.fitBounds(bounds, { padding: [40, 40] });
-
-        } catch(e) {
-            listEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+    /* ═══ ONLINE/OFFLINE STATUS ═══
+       Online  = lastSeen within 30 minutes
+       Offline = lastSeen more than 30 minutes ago
+       Never   = lastSeen is null (old devices before this feature)
+    */
+    function getStatusBadge(lastSeen) {
+        if (!lastSeen) return `<span class="badge-unknown">⚪ Never Synced</span>`;
+        const utcStr  = lastSeen.endsWith('Z') ? lastSeen : lastSeen + 'Z';
+        const diffMin = Math.floor((Date.now() - new Date(utcStr).getTime()) / 60000);
+        if (diffMin <= 30) {
+            return `<span class="badge-online"><span class="online-dot"></span> Online</span>`;
+        } else {
+            return `<span class="badge-offline"><span class="offline-dot"></span> Offline</span>`;
         }
     }
 
-    function flyToDevice(lat, lng) {
-        leafletMap.flyTo([lat, lng], 15, { animate: true, duration: 1.5 });
-        mapMarkers.forEach(m => {
-            const pos = m.getLatLng();
-            if (Math.abs(pos.lat - lat) < 0.001 && Math.abs(pos.lng - lng) < 0.001) m.openPopup();
-        });
+    function getLastSeenText(lastSeen) {
+        if (!lastSeen) return '🕐 Last seen: Never';
+        return `🕐 Last seen: ${timeAgo(lastSeen)}`;
     }
 
     /* DEVICE CARDS */
@@ -734,12 +659,16 @@
             if (!devices.length) { c.innerHTML = '<div class="st-empty">No devices enrolled yet</div>'; return; }
             c.innerHTML = `<div class="cards-grid">${devices.map(d => `
             <div class="dcard">
-                <div class="dcard-head"><div class="dcard-icon">📱</div><span class="badge-ok">● ENROLLED</span></div>
+                <div class="dcard-head">
+                    <div class="dcard-icon">📱</div>
+                    ${getStatusBadge(d.lastSeen)}
+                </div>
+                <div class="dcard-lastseen">${getLastSeenText(d.lastSeen)}</div>
                 <div class="dcard-id">ID: <span>${d.deviceId.substring(0,20)}...</span></div>
                 <div class="dcard-meta">Token: ${d.enrollmentToken}<br>Since: ${new Date(d.enrolledAt).toLocaleDateString()}</div>
                 <div class="dcard-btns">
                     <button class="dcard-btn" onclick="viewInfo('${d.deviceId}')">📋 Device Info</button>
-                    <button class="dcard-btn v2" onclick="viewApps('${d.deviceId}')">📦 App Inventory</button>
+                    <button class="dcard-btn v2" onclick="viewApps('${d.deviceId}')">📦 Apps</button>
                     <button class="dcard-btn del" onclick="deleteDevice('${d.deviceId}')">🗑 Delete</button>
                 </div>
             </div>`).join('')}</div>`;
@@ -828,6 +757,57 @@
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAppsPanel(); });
 
+    /* LOCATION MAP */
+    async function loadLocationMap() {
+        const listEl = document.getElementById('locationDeviceList');
+        listEl.innerHTML = '<div class="st-loading" style="padding:12px 0">⟳ Loading...</div>';
+        if (!leafletMap) {
+            leafletMap = L.map('map').setView([20.5937, 78.9629], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(leafletMap);
+        }
+        setTimeout(() => leafletMap.invalidateSize(), 100);
+        mapMarkers.forEach(m => leafletMap.removeLayer(m));
+        mapMarkers = [];
+        try {
+            const res       = await fetch(`${API}/api/device-locations?adminId=${adminId}`);
+            const locations = await res.json();
+            if (!locations.length) {
+                listEl.innerHTML = `<div style="padding:8px 0;font-size:12px;font-family:monospace;color:var(--muted)">📍 No location data yet — wait for next sync (15 mins)</div>`;
+                return;
+            }
+            const bounds = [];
+            listEl.innerHTML = locations.map(loc => `
+                <div class="loc-card" onclick="flyToDevice(${loc.latitude},${loc.longitude})">
+                    <div class="loc-card-name">📱 ${loc.model || 'Unknown'} (${loc.manufacturer || '—'})</div>
+                    <div class="loc-card-coords">📍 ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}</div>
+                    <div class="loc-card-time">🕐 ${timeAgo(loc.timestamp)} · ±${Math.round(loc.accuracy || 0)}m</div>
+                </div>`).join('');
+            locations.forEach(loc => {
+                const marker = L.marker([loc.latitude, loc.longitude])
+                    .addTo(leafletMap)
+                    .bindPopup(`<b>📱 ${loc.model || 'Unknown'}</b><br>${loc.manufacturer || ''}<br>
+                        📍 ${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}<br>
+                        🕐 ${timeAgo(loc.timestamp)}<br>±${Math.round(loc.accuracy || 0)}m accuracy`);
+                mapMarkers.push(marker);
+                bounds.push([loc.latitude, loc.longitude]);
+            });
+            if (bounds.length > 0) leafletMap.fitBounds(bounds, { padding: [40, 40] });
+        } catch(e) {
+            listEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+        }
+    }
+
+    function flyToDevice(lat, lng) {
+        leafletMap.flyTo([lat, lng], 15, { animate: true, duration: 1.5 });
+        mapMarkers.forEach(m => {
+            const pos = m.getLatLng();
+            if (Math.abs(pos.lat - lat) < 0.001 && Math.abs(pos.lng - lng) < 0.001) m.openPopup();
+        });
+    }
+
+    /* TOKEN MANAGEMENT */
     async function loadTokens() {
         const c = document.getElementById('tokensList');
         c.innerHTML = '<div class="st-loading">⟳ Loading tokens...</div>';
