@@ -3,10 +3,15 @@ package com.mdm.backend.repository;
 import com.mdm.backend.model.AppActivityLog;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface AppActivityLogRepository extends JpaRepository<AppActivityLog, Long> {
 
     // Returns last 20 logs for a given admin, newest first
     List<AppActivityLog> findByAdminIdOrderByTimestampDesc(Long adminId, Pageable pageable);
+
+    // Delete all logs for a device (used when wiping a device)
+    @Transactional
+    void deleteByDeviceId(String deviceId);
 }

@@ -20,8 +20,6 @@
         }
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;transition:background .3s,color .3s;}
-
-        /* LOGIN */
         .login-page{display:flex;width:100%;min-height:100vh;align-items:center;justify-content:center;background:var(--bg);}
         .login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 64px var(--shadow);animation:up .3s ease;}
         .login-logo{text-align:center;margin-bottom:32px;}
@@ -41,19 +39,13 @@
         .login-btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;padding:13px;color:white;font-size:14px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;margin-top:6px;transition:opacity .15s;}
         .login-btn:hover{opacity:.9;}
         .login-msg{margin-top:14px;}
-
-        /* APP SHELL */
         .app-shell{display:none;width:100%;}
         .app-shell.visible{display:flex;}
-
-        /* THEME TOGGLE */
         .theme-toggle{position:relative;width:52px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:50px;cursor:pointer;transition:all .3s;flex-shrink:0;}
         .theme-toggle::before{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 2px 8px rgba(79,142,247,.4);}
         [data-theme="light"] .theme-toggle::before{transform:translateX(24px);background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 2px 8px rgba(245,158,11,.4);}
         .theme-toggle-wrap{display:flex;align-items:center;gap:8px;}
         .theme-icon{font-size:14px;}
-
-        /* SIDEBAR */
         .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;transition:background .3s,border-color .3s;box-shadow:2px 0 12px var(--shadow);}
         .logo{padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:20px;}
         .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px;box-shadow:0 4px 12px rgba(79,142,247,.3);}
@@ -73,12 +65,8 @@
         .dot{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:6px;animation:blink 2s infinite;}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
         .dot-text{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-
-        /* AUTO REFRESH */
         .refresh-indicator{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--green);display:flex;align-items:center;gap:6px;}
         .refresh-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;}
-
-        /* MAIN */
         .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
         .topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0;box-shadow:0 2px 8px var(--shadow);transition:background .3s,border-color .3s;}
         .topbar-title{font-size:15px;font-weight:700;flex:1;}
@@ -90,12 +78,8 @@
         .content{flex:1;overflow-y:auto;padding:28px;}
         .content::-webkit-scrollbar{width:4px;}
         .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-
-        /* PAGES */
         .page{display:none;}
         .page.active{display:block;}
-
-        /* STATS */
         .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
         .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;position:relative;overflow:hidden;transition:all .3s;box-shadow:0 2px 8px var(--shadow);}
         .stat-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px var(--shadow);}
@@ -109,71 +93,31 @@
         .stat-card.cg .stat-val{color:var(--green);}
         .stat-card.cp .stat-val{color:var(--accent2);}
         .stat-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
-
         .sec-hdr{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
         .sec-hdr::before{content:'';display:inline-block;width:4px;height:14px;background:var(--accent);border-radius:2px;}
-
-        /* ═══════════════════════════════════════
-           ACTIVITY LOG — compact, own scroll
-           ═══════════════════════════════════════ */
-        .activity-wrap{
-            border:1px solid var(--border);
-            border-radius:12px;
-            overflow:hidden;
-            display:flex;
-            flex-direction:column;
-            max-height:420px;  /* fixed height — only this scrolls */
-        }
-        .activity-feed{
-            overflow-y:auto;
-            flex:1;
-        }
+        .activity-wrap{border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;max-height:420px;}
+        .activity-feed{overflow-y:auto;flex:1;}
         .activity-feed::-webkit-scrollbar{width:4px;}
         .activity-feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-
-        .al-head{
-            display:grid;
-            grid-template-columns:28px 80px 1fr 1fr 150px 72px;
-            gap:0 12px;
-            padding:8px 16px;
-            background:var(--surface2);
-            border-bottom:1px solid var(--border);
-            position:sticky;top:0;z-index:2;
-        }
+        .al-head{display:grid;grid-template-columns:28px 80px 1fr 1fr 150px 72px;gap:0 12px;padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;}
         .al-head span{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
-
-        .al-row{
-            display:grid;
-            grid-template-columns:28px 80px 1fr 1fr 150px 72px;
-            align-items:center;
-            gap:0 12px;
-            padding:9px 16px;
-            background:var(--surface);
-            border-bottom:1px solid var(--border);
-            transition:background .1s;
-            position:relative;
-        }
+        .al-row{display:grid;grid-template-columns:28px 80px 1fr 1fr 150px 72px;align-items:center;gap:0 12px;padding:9px 16px;background:var(--surface);border-bottom:1px solid var(--border);transition:background .1s;position:relative;}
         .al-row:last-child{border-bottom:none;}
         .al-row:hover{background:var(--surface2);}
         .al-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
         .al-row.installed::before{background:var(--green);}
         .al-row.uninstalled::before{background:var(--red);}
-
         .al-ico{font-size:14px;text-align:center;}
         .al-badge{font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.06em;padding:2px 7px;border-radius:4px;white-space:nowrap;display:inline-block;}
-        .al-row.installed   .al-badge{background:rgba(16,217,126,.12);border:1px solid rgba(16,217,126,.3);color:var(--green);}
+        .al-row.installed .al-badge{background:rgba(16,217,126,.12);border:1px solid rgba(16,217,126,.3);color:var(--green);}
         .al-row.uninstalled .al-badge{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);}
-
         .al-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .al-pkg{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .al-device{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .al-src{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .al-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:right;white-space:nowrap;}
-
         .al-empty{text-align:center;padding:40px 28px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);}
         .al-empty-ico{font-size:32px;margin-bottom:10px;}
-
-        /* DEVICE CARDS */
         .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
         .dcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .2s;box-shadow:0 2px 8px var(--shadow);}
         .dcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px var(--shadow);}
@@ -183,12 +127,12 @@
         .dcard-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:3px;}
         .dcard-id span{color:var(--accent);}
         .dcard-meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.7;margin-bottom:16px;}
-        .dcard-btns{display:flex;gap:8px;}
+        .dcard-btns{display:flex;gap:8px;flex-wrap:wrap;}
         .dcard-btn{flex:1;padding:8px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:'Syne',sans-serif;font-weight:600;transition:all .15s;}
         .dcard-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.05);}
         .dcard-btn.v2:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(124,58,237,.05);}
-
-        /* DEVICE INFO MODAL */
+        .dcard-btn.del{border-color:rgba(239,68,68,.3);color:var(--red);}
+        .dcard-btn.del:hover{border-color:var(--red);background:rgba(239,68,68,.08);}
         .overlay{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:100;backdrop-filter:blur(6px);align-items:center;justify-content:center;}
         .overlay.on{display:flex;}
         .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:90%;max-width:820px;max-height:88vh;overflow-y:auto;padding:28px;animation:up .2s ease;box-shadow:0 24px 64px var(--shadow);}
@@ -203,8 +147,6 @@
         .info-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;}
         .info-k{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
         .info-v{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;word-break:break-all;}
-
-        /* APP INVENTORY SLIDE-IN PANEL */
         .apps-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);z-index:200;opacity:0;transition:opacity .3s;}
         .apps-scrim.on{display:block;opacity:1;}
         .apps-panel{position:fixed;top:0;right:0;bottom:0;width:min(1000px,100vw);background:var(--bg);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);box-shadow:-8px 0 48px rgba(0,0,0,0.5);}
@@ -250,8 +192,6 @@
         .ap-badge-sys{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);color:var(--orange);}
         .ap-badge-usr{background:rgba(16,217,126,.1);border:1px solid rgba(16,217,126,.3);color:var(--green);}
         .ap-state{padding:60px 28px;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
-
-        /* SHARED TABLE */
         .tbl{width:100%;border-collapse:collapse;font-size:12px;}
         .tbl th{background:var(--surface2);color:var(--muted);padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);}
         .tbl td{padding:9px 14px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
@@ -260,8 +200,6 @@
         .tbadge-sys{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--orange);}
         .tbadge-usr{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);}
         .tbadge-red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);}
-
-        /* QR */
         .qr-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
         .qr-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:0 2px 8px var(--shadow);}
         .qr-card-title{font-size:13px;font-weight:700;margin-bottom:20px;}
@@ -286,8 +224,6 @@
         .steps-list li{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
         .steps-list li:last-child{border-bottom:none;}
         .step-n{width:22px;height:22px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--accent);flex-shrink:0;}
-
-        /* TOKEN */
         .token-form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px var(--shadow);}
         .token-form-title{font-size:13px;font-weight:700;margin-bottom:16px;}
         .token-form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
@@ -296,8 +232,6 @@
         .tbl-action-btn{padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;font-size:10px;font-family:'Syne',sans-serif;font-weight:600;transition:all .15s;}
         .tbl-action-btn:hover{border-color:var(--accent);color:var(--accent);}
         .tbl-action-btn.del:hover{border-color:var(--red);color:var(--red);}
-
-        /* STATES */
         .st-loading{text-align:center;padding:48px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
         .st-empty{text-align:center;padding:48px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
         .st-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 16px;color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
@@ -320,30 +254,15 @@
         </div>
         <div class="login-form active" id="loginForm">
             <div id="loginMsg"></div>
-            <div class="login-fgrp">
-                <label class="login-flbl">Username</label>
-                <input class="login-finp" type="text" id="loginUsername" placeholder="Enter username">
-            </div>
-            <div class="login-fgrp">
-                <label class="login-flbl">Password</label>
-                <input class="login-finp" type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
-            </div>
+            <div class="login-fgrp"><label class="login-flbl">Username</label><input class="login-finp" type="text" id="loginUsername" placeholder="Enter username"></div>
+            <div class="login-fgrp"><label class="login-flbl">Password</label><input class="login-finp" type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
             <button class="login-btn" onclick="doLogin()">Sign In →</button>
         </div>
         <div class="login-form" id="registerForm">
             <div id="registerMsg"></div>
-            <div class="login-fgrp">
-                <label class="login-flbl">Username *</label>
-                <input class="login-finp" type="text" id="regUsername" placeholder="Choose a username">
-            </div>
-            <div class="login-fgrp">
-                <label class="login-flbl">Email (optional)</label>
-                <input class="login-finp" type="email" id="regEmail" placeholder="admin@company.com">
-            </div>
-            <div class="login-fgrp">
-                <label class="login-flbl">Password *</label>
-                <input class="login-finp" type="password" id="regPassword" placeholder="Choose a strong password" onkeydown="if(event.key==='Enter')doRegister()">
-            </div>
+            <div class="login-fgrp"><label class="login-flbl">Username *</label><input class="login-finp" type="text" id="regUsername" placeholder="Choose a username"></div>
+            <div class="login-fgrp"><label class="login-flbl">Email (optional)</label><input class="login-finp" type="email" id="regEmail" placeholder="admin@company.com"></div>
+            <div class="login-fgrp"><label class="login-flbl">Password *</label><input class="login-finp" type="password" id="regPassword" placeholder="Choose a strong password" onkeydown="if(event.key==='Enter')doRegister()"></div>
             <button class="login-btn" onclick="doRegister()">Create Account →</button>
         </div>
     </div>
@@ -387,7 +306,7 @@
             </div>
             <div class="theme-toggle-wrap">
                 <span class="theme-icon">🌙</span>
-                <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"></div>
+                <div class="theme-toggle" onclick="toggleTheme()"></div>
                 <span class="theme-icon">☀️</span>
             </div>
             <button class="topbar-btn" onclick="refresh()">⟳ Refresh</button>
@@ -395,29 +314,24 @@
         </div>
 
         <div class="content">
-
-            <!-- DASHBOARD PAGE -->
+            <!-- DASHBOARD -->
             <div class="page active" id="page-dashboard">
                 <div class="stats-row">
                     <div class="stat-card cb"><div class="stat-lbl">Enrolled Devices</div><div class="stat-val" id="totalDevices">—</div><div class="stat-sub">total registered</div></div>
                     <div class="stat-card cg"><div class="stat-lbl">Apps Tracked</div><div class="stat-val" id="totalApps">—</div><div class="stat-sub">across all devices</div></div>
                     <div class="stat-card cp"><div class="stat-lbl">Active Enrollments</div><div class="stat-val" id="totalEnrolled">—</div><div class="stat-sub">currently active</div></div>
                 </div>
-
-                <div class="sec-hdr">
-                    Recent App Activity
-                    <span style="margin-left:auto;font-size:9px;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:400;">Last 20 events · newest first</span>
-                </div>
+                <div class="sec-hdr">Recent App Activity <span style="margin-left:auto;font-size:9px;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:400;">Last 20 events · newest first</span></div>
                 <div id="activityFeed"><div class="st-loading">⟳ Loading activity...</div></div>
             </div>
 
-            <!-- DEVICES PAGE -->
+            <!-- DEVICES -->
             <div class="page" id="page-devices">
                 <div class="sec-hdr">All Enrolled Devices</div>
                 <div id="allCards"><div class="st-loading">⟳ Loading devices...</div></div>
             </div>
 
-            <!-- TOKENS PAGE -->
+            <!-- TOKENS -->
             <div class="page" id="page-tokens">
                 <div class="sec-hdr" style="margin-bottom:20px">Enrollment Token Management</div>
                 <div class="token-form-card">
@@ -434,7 +348,7 @@
                 <div id="tokensList"><div class="st-loading">⟳ Loading tokens...</div></div>
             </div>
 
-            <!-- QR PAGE -->
+            <!-- QR -->
             <div class="page" id="page-qr">
                 <div class="sec-hdr" style="margin-bottom:20px">QR Code Provisioning</div>
                 <div class="qr-wrap">
@@ -468,7 +382,6 @@
                     </ul>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -481,7 +394,7 @@
     </div>
 </div>
 
-<!-- APP INVENTORY SLIDE-IN PANEL -->
+<!-- APP INVENTORY PANEL -->
 <div class="apps-scrim" id="appsScrim" onclick="closeAppsPanel()"></div>
 <div class="apps-panel" id="appsPanel">
     <div class="ap-topbar">
@@ -512,7 +425,6 @@
     let adminId = null, adminUsername = null;
     let apFilter = 'all';
 
-    /* THEME */
     function toggleTheme() {
         const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
@@ -520,10 +432,8 @@
     }
     (function(){ document.documentElement.setAttribute('data-theme', localStorage.getItem('mdm-theme') || 'dark'); })();
 
-    /* CLOCK */
     setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
 
-    /* AUTO REFRESH */
     let autoRefreshInterval = null, countdownInterval = null, countdown = 10;
     function startAutoRefresh() {
         stopAutoRefresh(); countdown = 10;
@@ -534,9 +444,7 @@
             document.getElementById('refreshCountdown').textContent = countdown + 's';
             if (countdown <= 0) countdown = 10;
         }, 1000);
-        autoRefreshInterval = setInterval(() => {
-            loadStats(); loadActivityLog(); countdown = 10;
-        }, 10000);
+        autoRefreshInterval = setInterval(() => { loadStats(); loadActivityLog(); countdown = 10; }, 10000);
     }
     function stopAutoRefresh() {
         if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
@@ -544,7 +452,6 @@
         document.getElementById('autoRefreshIndicator').style.display = 'none';
     }
 
-    /* LOGIN */
     function switchTab(tab) {
         document.querySelectorAll('.login-tab').forEach((b,i) => b.classList.toggle('active',(i===0)===(tab==='login')));
         document.getElementById('loginForm').classList.toggle('active', tab==='login');
@@ -609,7 +516,6 @@
         if (sid && snam) { adminId = parseInt(sid); adminUsername = snam; showDashboard(); }
     })();
 
-    /* NAVIGATION */
     function showPage(name, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -622,7 +528,6 @@
     }
     function refresh() { loadStats(); loadActivityLog(); }
 
-    /* STATS */
     async function loadStats() {
         try {
             const res  = await fetch(`${API}/api/stats?adminId=${adminId}`);
@@ -633,67 +538,38 @@
         } catch(e) { console.error(e); }
     }
 
-    /* ═══════════════════════════════════════
-       ACTIVITY LOG
-       Backend returns newest first (OrderByTimestampDesc).
-       Time is stored as UTC — we convert to local time for display.
-       ═══════════════════════════════════════ */
     async function loadActivityLog() {
         const feed = document.getElementById('activityFeed');
         try {
             const res  = await fetch(`${API}/api/activity-log?adminId=${adminId}`);
-            const logs = await res.json(); // already newest first from backend
-
+            const logs = await res.json();
             if (!logs.length) {
                 feed.innerHTML = `<div class="activity-wrap"><div class="al-empty"><div class="al-empty-ico">📭</div>No app activity yet. Install or uninstall an app on an enrolled device.</div></div>`;
                 return;
             }
-
             const rows = logs.map(log => {
                 const isInstall = log.action === 'INSTALLED';
-                const icon      = isInstall ? '📥' : '🗑️';
-                const cls       = isInstall ? 'installed' : 'uninstalled';
-                const src       = (log.installSource && log.installSource !== 'N/A') ? log.installSource : '—';
-                const shortDev  = (log.deviceId || '—').substring(0, 16) + '…';
-                return `
-                <div class="al-row ${cls}">
+                const icon = isInstall ? '📥' : '🗑️';
+                const cls  = isInstall ? 'installed' : 'uninstalled';
+                const src  = (log.installSource && log.installSource !== 'N/A') ? log.installSource : '—';
+                const shortDev = (log.deviceId || '—').substring(0, 16) + '…';
+                return `<div class="al-row ${cls}">
                     <div class="al-ico">${icon}</div>
                     <div><span class="al-badge">${log.action}</span></div>
-                    <div>
-                        <div class="al-name">${log.appName || log.packageName || 'Unknown'}</div>
-                        <div class="al-pkg">${log.packageName || ''}</div>
-                    </div>
-                    <div class="al-device">
-                        ${log.model || '—'} (${log.manufacturer || '—'})<br>
-                        <span style="color:var(--accent);font-size:9px">${shortDev}</span>
-                    </div>
+                    <div><div class="al-name">${log.appName || log.packageName || 'Unknown'}</div><div class="al-pkg">${log.packageName || ''}</div></div>
+                    <div class="al-device">${log.model || '—'} (${log.manufacturer || '—'})<br><span style="color:var(--accent);font-size:9px">${shortDev}</span></div>
                     <div class="al-src">⬇ ${src}</div>
                     <div class="al-time">${timeAgo(log.timestamp)}</div>
                 </div>`;
             }).join('');
-
-            feed.innerHTML = `
-            <div class="activity-wrap">
-                <div class="al-head">
-                    <span></span>
-                    <span>Action</span>
-                    <span>App</span>
-                    <span>Device</span>
-                    <span>Source</span>
-                    <span style="text-align:right">Time</span>
-                </div>
-                <div class="activity-feed">${rows}</div>
-            </div>`;
-
+            feed.innerHTML = `<div class="activity-wrap"><div class="al-head"><span></span><span>Action</span><span>App</span><span>Device</span><span>Source</span><span style="text-align:right">Time</span></div><div class="activity-feed">${rows}</div></div>`;
         } catch(e) {
             feed.innerHTML = `<div class="st-err">❌ Failed to load activity log: ${e.message}</div>`;
         }
     }
 
-    /* timeAgo — treats server timestamp as UTC, converts to local */
     function timeAgo(isoString) {
         if (!isoString) return '—';
-        // Append 'Z' if missing so JS parses as UTC
         const utcStr = isoString.endsWith('Z') ? isoString : isoString + 'Z';
         const diff   = Math.floor((Date.now() - new Date(utcStr).getTime()) / 1000);
         if (diff < 0)     return 'just now';
@@ -719,12 +595,28 @@
                 <div class="dcard-btns">
                     <button class="dcard-btn" onclick="viewInfo('${d.deviceId}')">📋 Device Info</button>
                     <button class="dcard-btn v2" onclick="viewApps('${d.deviceId}')">📦 App Inventory</button>
+                    <button class="dcard-btn del" onclick="deleteDevice('${d.deviceId}')">🗑 Delete</button>
                 </div>
             </div>`).join('')}</div>`;
         } catch(e) { c.innerHTML = '<div class="st-err">❌ Failed to load devices</div>'; }
     }
 
-    /* DEVICE INFO MODAL */
+    /* DELETE DEVICE */
+    async function deleteDevice(deviceId) {
+        if (!confirm(`⚠️ Delete this device?\n\nThis will permanently remove:\n• Enrollment record\n• Device info\n• App inventory\n• Activity logs\n\nThis cannot be undone!`)) return;
+        try {
+            const res = await fetch(`${API}/api/devices/${deviceId}`, { method: 'DELETE' });
+            if (res.ok) {
+                renderCards('allCards');
+                loadStats();
+            } else {
+                alert('❌ Failed to delete device: ' + await res.text());
+            }
+        } catch(e) {
+            alert('❌ Error: ' + e.message);
+        }
+    }
+
     async function viewInfo(deviceId) {
         document.getElementById('infoTitle').textContent = '📋 ' + deviceId.substring(0,22) + '...';
         document.getElementById('infoGrid').innerHTML = '<div class="st-loading">⟳ Loading...</div>';
@@ -739,7 +631,6 @@
         } catch(e) { document.getElementById('infoGrid').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
     }
 
-    /* APP INVENTORY PANEL */
     async function viewApps(deviceId) {
         document.getElementById('apPanelSubtitle').textContent = deviceId;
         document.getElementById('apStatTotal').textContent = '—';
@@ -780,22 +671,15 @@
     function applyFilter() { renderApps(); }
 
     function renderApps() {
-        const q    = (document.getElementById('apSearchInput').value || '').toLowerCase();
-        let list   = allApps;
+        const q  = (document.getElementById('apSearchInput').value || '').toLowerCase();
+        let list = allApps;
         if (apFilter === 'user') list = list.filter(a => !a.isSystemApp);
         if (apFilter === 'sys')  list = list.filter(a =>  a.isSystemApp);
         if (q) list = list.filter(a => (a.appName||'').toLowerCase().includes(q) || (a.packageName||'').toLowerCase().includes(q));
         if (!list.length) { document.getElementById('apBody').innerHTML = '<div class="ap-state">No apps match your filter</div>'; return; }
         document.getElementById('apBody').innerHTML =
-            `<div class="ap-row-head">
-                <div class="ap-col-hdr">App Name</div>
-                <div class="ap-col-hdr">Package</div>
-                <div class="ap-col-hdr">Version</div>
-                <div class="ap-col-hdr">Type</div>
-                <div class="ap-col-hdr">Source</div>
-             </div>` +
-            list.map(a => `
-            <div class="ap-row">
+            `<div class="ap-row-head"><div class="ap-col-hdr">App Name</div><div class="ap-col-hdr">Package</div><div class="ap-col-hdr">Version</div><div class="ap-col-hdr">Type</div><div class="ap-col-hdr">Source</div></div>` +
+            list.map(a => `<div class="ap-row">
                 <div class="ap-app-name">${a.appName||'N/A'}</div>
                 <div class="ap-pkg">${a.packageName||'N/A'}</div>
                 <div class="ap-ver">${a.versionName||'N/A'}</div>
@@ -806,7 +690,6 @@
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAppsPanel(); });
 
-    /* TOKEN MANAGEMENT */
     async function loadTokens() {
         const c = document.getElementById('tokensList');
         c.innerHTML = '<div class="st-loading">⟳ Loading tokens...</div>';
@@ -859,11 +742,9 @@
         catch(e) { alert('Failed to delete token'); }
     }
 
-    /* MODAL HELPERS */
     function closeOv(id) { document.getElementById(id).classList.remove('on'); }
     function ovClose(e, id) { if (e.target.id === id) closeOv(id); }
 
-    /* QR */
     function generateQR() {
         const data = JSON.stringify({
             "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.sujan.mdm/.MyDeviceAdminReceiver",

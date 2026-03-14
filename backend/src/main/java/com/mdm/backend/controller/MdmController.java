@@ -36,49 +36,32 @@ public class MdmController {
 
     // ── Enroll with token validation ──
     @PostMapping("/enroll")
-    public ResponseEntity<String> enrollDevice(
-            @RequestBody EnrolledDevice device) {
+    public ResponseEntity<String> enrollDevice(@RequestBody EnrolledDevice device) {
         try {
             if (enrolledDeviceRepository.existsByDeviceId(device.getDeviceId())) {
                 return ResponseEntity.ok("Device already enrolled");
             }
-
             Optional<EnrollmentToken> tokenOpt =
                     enrollmentTokenRepository.findByToken(device.getEnrollmentToken());
-
             if (tokenOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Invalid enrollment token!");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid enrollment token!");
             }
-
             EnrollmentToken token = tokenOpt.get();
-
             if (!token.isActive()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Enrollment token is disabled!");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enrollment token is disabled!");
             }
-
-            if (token.getExpiresAt() != null &&
-                    token.getExpiresAt().isBefore(LocalDateTime.now())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Enrollment token has expired!");
+            if (token.getExpiresAt() != null && token.getExpiresAt().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enrollment token has expired!");
             }
-
             if (token.getCurrentUses() >= token.getMaxUses()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Enrollment token has reached maximum uses!");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enrollment token has reached maximum uses!");
             }
-
             device.setAdminId(token.getAdminId());
             device.setEnrolledAt(LocalDateTime.now());
             enrolledDeviceRepository.save(device);
-
             token.setCurrentUses(token.getCurrentUses() + 1);
             enrollmentTokenRepository.save(token);
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Device enrolled successfully");
-
+            return ResponseEntity.status(HttpStatus.CREATED).body("Device enrolled successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Enrollment failed: " + e.getMessage());
@@ -122,17 +105,30 @@ public class MdmController {
         return ResponseEntity.ok(appInventoryRepository.findByDeviceId(deviceId));
     }
 
+    // ── DELETE device — wipes ALL data for that device ──
+    @DeleteMapping("/api/devices/{deviceId}")
+    public ResponseEntity<?> deleteDevice(@PathVariable String deviceId) {
+        try {
+            // Delete all related data in correct order
+            activityLogRepository.deleteByDeviceId(deviceId);
+            appInventoryRepository.deleteByDeviceId(deviceId);
+            deviceInfoRepository.deleteByDeviceId(deviceId);
+            enrolledDeviceRepository.deleteByDeviceId(deviceId);
+            return ResponseEntity.ok("Device and all associated data deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to delete device: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/api/stats")
     public ResponseEntity<?> getStats(@RequestParam Long adminId) {
         long totalDevices = enrolledDeviceRepository.countByAdminId(adminId);
-
         List<String> deviceIds = enrolledDeviceRepository.findByAdminId(adminId)
                 .stream().map(EnrolledDevice::getDeviceId).toList();
-
         long totalApps  = appInventoryRepository.countByDeviceIdIn(deviceIds);
         long systemApps = appInventoryRepository.countByDeviceIdInAndIsSystemApp(deviceIds, true);
         long userApps   = appInventoryRepository.countByDeviceIdInAndIsSystemApp(deviceIds, false);
-
         Map<String, Long> stats = new HashMap<>();
         stats.put("totalDevices", totalDevices);
         stats.put("totalApps",    totalApps);
@@ -188,7 +184,6 @@ public class MdmController {
 
     @GetMapping("/api/activity-log")
     public List<AppActivityLog> getActivityLog(@RequestParam Long adminId) {
-        // Return last 20 entries, newest first
         return activityLogRepository.findByAdminIdOrderByTimestampDesc(
                 adminId, PageRequest.of(0, 20));
     }
