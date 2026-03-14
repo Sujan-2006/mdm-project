@@ -1,7 +1,6 @@
 package com.sujan.mdm
 
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageInfo
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
@@ -21,60 +20,56 @@ import kotlinx.coroutines.withContext
 
 class AppInventoryActivity : AppCompatActivity() {
 
-    private lateinit var rvApps: RecyclerView
-    private lateinit var etSearch: EditText
-    private lateinit var btnAll: Button
-    private lateinit var btnUser: Button
-    private lateinit var btnSystem: Button
-    private lateinit var tvTotal: TextView
-    private lateinit var tvSystem: TextView
-    private lateinit var tvUser: TextView
-    private lateinit var tvLoading: TextView
+    private lateinit var rvApps     : RecyclerView
+    private lateinit var etSearch   : EditText
+    private lateinit var btnAll     : Button
+    private lateinit var btnUser    : Button
+    private lateinit var btnSystem  : Button
+    private lateinit var tvTotal    : TextView
+    private lateinit var tvSystem   : TextView
+    private lateinit var tvUser     : TextView
+    private lateinit var tvLoading  : TextView
     private lateinit var progressBar: ProgressBar
 
-    private var allApps     = listOf<AppDisplayItem>()
+    private var allApps       = listOf<AppDisplayItem>()
     private var currentFilter = "all"
     private lateinit var adapter: AppListAdapter
 
     data class AppDisplayItem(
-        val appName: String,
-        val packageName: String,
-        val versionName: String,
-        val isSystemApp: Boolean,
+        val appName      : String,
+        val packageName  : String,
+        val versionName  : String,
+        val isSystemApp  : Boolean,
         val installSource: String,
-        val icon: Drawable?
+        val icon         : Drawable?
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_app_inventory)
-
         supportActionBar?.hide()
 
-        rvApps       = findViewById(R.id.rvApps)
-        etSearch     = findViewById(R.id.etSearch)
-        btnAll       = findViewById(R.id.btnAll)
-        btnUser      = findViewById(R.id.btnUser)
-        btnSystem    = findViewById(R.id.btnSystem)
-        tvTotal      = findViewById(R.id.tvTotalCount)
-        tvSystem     = findViewById(R.id.tvSystemCount)
-        tvUser       = findViewById(R.id.tvUserCount)
-        tvLoading    = findViewById(R.id.tvLoading)
-        progressBar  = findViewById(R.id.progressBar)
+        rvApps      = findViewById(R.id.rvApps)
+        etSearch    = findViewById(R.id.etSearch)
+        btnAll      = findViewById(R.id.btnAll)
+        btnUser     = findViewById(R.id.btnUser)
+        btnSystem   = findViewById(R.id.btnSystem)
+        tvTotal     = findViewById(R.id.tvTotalCount)
+        tvSystem    = findViewById(R.id.tvSystemCount)
+        tvUser      = findViewById(R.id.tvUserCount)
+        tvLoading   = findViewById(R.id.tvLoading)
+        progressBar = findViewById(R.id.progressBar)
 
         adapter = AppListAdapter(emptyList())
         rvApps.layoutManager = LinearLayoutManager(this)
-        rvApps.adapter = adapter
+        rvApps.adapter       = adapter
 
-        // Back button
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
-        // Filter buttons
-        btnAll.setOnClickListener    { setFilter("all") }
-        btnUser.setOnClickListener   { setFilter("user") }
+        btnAll.setOnClickListener    { setFilter("all")    }
+        btnUser.setOnClickListener   { setFilter("user")   }
         btnSystem.setOnClickListener { setFilter("system") }
 
-        // Search
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) { applyFilterAndSearch() }
@@ -95,9 +90,9 @@ class AppInventoryActivity : AppCompatActivity() {
 
             val items = withContext(Dispatchers.IO) {
                 packages.mapNotNull { pkg ->
-                    val appInfo = pkg.applicationInfo ?: return@mapNotNull null
+                    val appInfo  = pkg.applicationInfo ?: return@mapNotNull null
                     val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                    val source = try {
+                    val source   = try {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             pm.getInstallSourceInfo(pkg.packageName).installingPackageName ?: "Unknown"
                         } else {
@@ -118,9 +113,8 @@ class AppInventoryActivity : AppCompatActivity() {
             }
 
             allApps = items
-
             val total  = items.size
-            val system = items.count { it.isSystemApp }
+            val system = items.count {  it.isSystemApp }
             val user   = items.count { !it.isSystemApp }
 
             tvTotal.text  = total.toString()
@@ -137,11 +131,12 @@ class AppInventoryActivity : AppCompatActivity() {
 
     private fun setFilter(filter: String) {
         currentFilter = filter
-        // Update button styles
-        val activeColor   = getColor(R.color.filter_active_bg)
-        val inactiveColor = getColor(android.R.color.transparent)
-        val activeText    = getColor(R.color.filter_active_text)
-        val inactiveText  = getColor(R.color.filter_inactive_text)
+
+        // Active = dark blue, Inactive = light grey — matches main screen style
+        val activeColor   = 0xFF1565C0.toInt()   // dark blue
+        val inactiveColor = 0xFFE8EAF6.toInt()   // light blue-grey
+        val activeText    = 0xFFFFFFFF.toInt()   // white
+        val inactiveText  = 0xFF757575.toInt()   // grey
 
         listOf(btnAll to "all", btnUser to "user", btnSystem to "system").forEach { (btn, f) ->
             if (f == filter) {
@@ -172,7 +167,6 @@ class AppInventoryActivity : AppCompatActivity() {
         }
 
         adapter.updateList(list)
-
         findViewById<TextView>(R.id.tvResultCount).text =
             "${list.size} app${if (list.size != 1) "s" else ""}"
     }
@@ -183,12 +177,12 @@ class AppInventoryActivity : AppCompatActivity() {
     ) : RecyclerView.Adapter<AppListAdapter.VH>() {
 
         inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-            val ivIcon    : ImageView = view.findViewById(R.id.ivAppIcon)
-            val tvName    : TextView  = view.findViewById(R.id.tvAppName)
-            val tvPkg     : TextView  = view.findViewById(R.id.tvAppPackage)
-            val tvVersion : TextView  = view.findViewById(R.id.tvAppVersion)
-            val tvSource  : TextView  = view.findViewById(R.id.tvAppSource)
-            val tvBadge   : TextView  = view.findViewById(R.id.tvAppBadge)
+            val ivIcon   : ImageView = view.findViewById(R.id.ivAppIcon)
+            val tvName   : TextView  = view.findViewById(R.id.tvAppName)
+            val tvPkg    : TextView  = view.findViewById(R.id.tvAppPackage)
+            val tvVersion: TextView  = view.findViewById(R.id.tvAppVersion)
+            val tvSource : TextView  = view.findViewById(R.id.tvAppSource)
+            val tvBadge  : TextView  = view.findViewById(R.id.tvAppBadge)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -210,14 +204,15 @@ class AppInventoryActivity : AppCompatActivity() {
                 holder.ivIcon.setImageResource(android.R.drawable.sym_def_app_icon)
             }
 
+            // Badge colors matching main screen palette
             if (app.isSystemApp) {
                 holder.tvBadge.text = "SYSTEM"
-                holder.tvBadge.setBackgroundColor(getColor(R.color.badge_system_bg))
-                holder.tvBadge.setTextColor(getColor(R.color.badge_system_text))
+                holder.tvBadge.setBackgroundColor(0xFFE8F5E9.toInt())  // light green bg
+                holder.tvBadge.setTextColor(0xFF2E7D32.toInt())         // dark green text
             } else {
                 holder.tvBadge.text = "USER"
-                holder.tvBadge.setBackgroundColor(getColor(R.color.badge_user_bg))
-                holder.tvBadge.setTextColor(getColor(R.color.badge_user_text))
+                holder.tvBadge.setBackgroundColor(0xFFF3E5F5.toInt())  // light purple bg
+                holder.tvBadge.setTextColor(0xFF6A1B9A.toInt())         // dark purple text
             }
         }
 
