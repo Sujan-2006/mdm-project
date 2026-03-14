@@ -179,7 +179,6 @@ class SyncWorker(
 
     @SuppressLint("MissingPermission")
     private suspend fun getLastLocation(): Location? {
-        // Check permissions before attempting — returns null cleanly if not granted
         val fineOk = androidx.core.content.ContextCompat.checkSelfPermission(
             applicationContext, android.Manifest.permission.ACCESS_FINE_LOCATION
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -188,55 +187,98 @@ class SyncWorker(
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
         if (!fineOk && !coarseOk) {
-            android.util.Log.w("SyncWorker", "Location permission not granted — skipping location")
+            android.util.Log.w("SyncWorker", "Location permission not granted — skipping")
             return null
         }
 
-        return withTimeoutOrNull(15_000L) {
-            suspendCancellableCoroutine { cont ->
-                val fusedClient = LocationServices.getFusedLocationProviderClient(applicationContext)
+        val fusedClient = LocationServices.getFusedLocationProviderClient(applicationContext)
 
-                // Try lastLocation first (fast, no battery cost)
+        // ── Step 1: try cached lastLocation (instant, no battery cost) ──
+        val cached = withTimeoutOrNull(3_000L) {
+            suspendCancellableCoroutine<Location?> { cont ->
                 fusedClient.lastLocation
-                    .addOnSuccessListener { location ->
-                        if (location != null) {
-                            android.util.Log.d("SyncWorker", "Got lastLocation: ${location.latitude}, ${location.longitude}")
-                            if (cont.isActive) cont.resume(location)
-                            return@addOnSuccessListener
-                        }
-                        // lastLocation was null — request a fresh one
-                        android.util.Log.d("SyncWorker", "lastLocation null, requesting fresh location...")
-                        val locationRequest = LocationRequest.Builder(
-                            Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L
-                        ).setMaxUpdates(1).build()
-
-                        val callback = object : LocationCallback() {
-                            override fun onLocationResult(result: LocationResult) {
-                                fusedClient.removeLocationUpdates(this)
-                                val loc = result.lastLocation
-                                android.util.Log.d("SyncWorker", "Fresh location: ${loc?.latitude}, ${loc?.longitude}")
-                                if (cont.isActive) cont.resume(loc)
-                            }
-                        }
-                        try {
-                            // Use a HandlerThread so we are not blocked by main looper
-                            val handlerThread = android.os.HandlerThread("loc-worker")
-                            handlerThread.start()
-                            val looper = handlerThread.looper
-                            fusedClient.requestLocationUpdates(locationRequest, callback, looper)
-                            cont.invokeOnCancellation {
-                                fusedClient.removeLocationUpdates(callback)
-                                handlerThread.quitSafely()
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("SyncWorker", "requestLocationUpdates failed: ${e.message}")
-                            if (cont.isActive) cont.resume(null)
-                        }
+                    .addOnSuccessListener { loc ->
+                        android.util.Log.d("SyncWorker", "Cached location: $loc")
+                        if (cont.isActive) cont.resume(loc)
                     }
-                    .addOnFailureListener { e ->
-                        android.util.Log.e("SyncWorker", "lastLocation failed: ${e.message}")
+                    .addOnFailureListener {
                         if (cont.isActive) cont.resume(null)
                     }
+            }
+        }
+        if (cached != null) return cached
+
+        // ── Step 2: request fresh location — try LOW_POWER (cell/WiFi) first ──
+        // LOW_POWER works indoors without GPS, much faster than HIGH_ACCURACY
+        android.util.Log.d("SyncWorker", "No cached location — requesting fresh (LOW_POWER)...")
+        val fresh = withTimeoutOrNull(20_000L) {
+            suspendCancellableCoroutine<Location?> { cont ->
+                val locationRequest = LocationRequest.Builder(
+                    Priority.PRIORITY_LOW_POWER, 1000L
+                ).setMaxUpdates(1)
+                    .setMinUpdateIntervalMillis(0L)
+                    .build()
+
+                val handlerThread = android.os.HandlerThread("loc-worker-${System.currentTimeMillis()}")
+                handlerThread.start()
+
+                val callback = object : LocationCallback() {
+                    override fun onLocationResult(result: LocationResult) {
+                        fusedClient.removeLocationUpdates(this)
+                        handlerThread.quitSafely()
+                        val loc = result.lastLocation
+                        android.util.Log.d("SyncWorker", "Fresh LOW_POWER location: $loc")
+                        if (cont.isActive) cont.resume(loc)
+                    }
+                }
+                try {
+                    fusedClient.requestLocationUpdates(locationRequest, callback, handlerThread.looper)
+                    cont.invokeOnCancellation {
+                        fusedClient.removeLocationUpdates(callback)
+                        handlerThread.quitSafely()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SyncWorker", "LOW_POWER request failed: ${e.message}")
+                    handlerThread.quitSafely()
+                    if (cont.isActive) cont.resume(null)
+                }
+            }
+        }
+        if (fresh != null) return fresh
+
+        // ── Step 3: fallback — try BALANCED_POWER as last resort ──
+        android.util.Log.d("SyncWorker", "LOW_POWER timed out — trying BALANCED_POWER fallback...")
+        return withTimeoutOrNull(20_000L) {
+            suspendCancellableCoroutine<Location?> { cont ->
+                val locationRequest = LocationRequest.Builder(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY, 1000L
+                ).setMaxUpdates(1)
+                    .setMinUpdateIntervalMillis(0L)
+                    .build()
+
+                val handlerThread = android.os.HandlerThread("loc-worker-bal-${System.currentTimeMillis()}")
+                handlerThread.start()
+
+                val callback = object : LocationCallback() {
+                    override fun onLocationResult(result: LocationResult) {
+                        fusedClient.removeLocationUpdates(this)
+                        handlerThread.quitSafely()
+                        val loc = result.lastLocation
+                        android.util.Log.d("SyncWorker", "BALANCED location: $loc")
+                        if (cont.isActive) cont.resume(loc)
+                    }
+                }
+                try {
+                    fusedClient.requestLocationUpdates(locationRequest, callback, handlerThread.looper)
+                    cont.invokeOnCancellation {
+                        fusedClient.removeLocationUpdates(callback)
+                        handlerThread.quitSafely()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SyncWorker", "BALANCED request failed: ${e.message}")
+                    handlerThread.quitSafely()
+                    if (cont.isActive) cont.resume(null)
+                }
             }
         }
     }
