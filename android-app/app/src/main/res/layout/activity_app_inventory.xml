@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0A0D14">
+
+    <!-- TOP BAR -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:background="#111520"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp"
+        android:gravity="center_vertical"
+        android:elevation="4dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#4F8EF7"
+            android:contentDescription="Back"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:text="App Inventory"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="#E2E8F0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/tvResultCount"
+                android:text="Loading..."
+                android:textSize="11sp"
+                android:textColor="#64748B"
+                android:fontFamily="monospace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:indeterminateTint="#4F8EF7"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+    <!-- STATS ROW -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#111520"
+        android:padding="12dp"
+        android:layout_marginTop="1dp">
+
+        <!-- Total -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#161B2E"
+            android:padding="12dp"
+            android:layout_marginEnd="6dp"
+            android:gravity="center">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#4F8EF7"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvTotalCount"
+                android:text="—"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#4F8EF7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:text="TOTAL"
+                android:textSize="9sp"
+                android:textColor="#64748B"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"/>
+
+        </LinearLayout>
+
+        <!-- System -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#161B2E"
+            android:padding="12dp"
+            android:layout_marginEnd="6dp"
+            android:gravity="center">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#F59E0B"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvSystemCount"
+                android:text="—"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#F59E0B"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:text="SYSTEM"
+                android:textSize="9sp"
+                android:textColor="#64748B"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"/>
+
+        </LinearLayout>
+
+        <!-- User -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#161B2E"
+            android:padding="12dp"
+            android:gravity="center">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#10D97E"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvUserCount"
+                android:text="—"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#10D97E"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:text="USER"
+                android:textSize="9sp"
+                android:textColor="#64748B"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- SEARCH BAR -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#111520"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="10dp"
+        android:paddingTop="8dp"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:hint="🔍  Search app name or package..."
+            android:textSize="13sp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#64748B"
+            android:background="#161B2E"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:fontFamily="monospace"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:singleLine="true"/>
+
+    </LinearLayout>
+
+    <!-- FILTER BUTTONS -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#111520"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="12dp"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/btnAll"
+            android:text="All"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:backgroundTint="#4F8EF7"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="6dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"/>
+
+        <Button
+            android:id="@+id/btnUser"
+            android:text="User"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:backgroundTint="#1E2640"
+            android:textColor="#64748B"
+            android:layout_marginEnd="6dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"/>
+
+        <Button
+            android:id="@+id/btnSystem"
+            android:text="System"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:backgroundTint="#1E2640"
+            android:textColor="#64748B"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"/>
+
+    </LinearLayout>
+
+    <!-- DIVIDER -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1E2640"/>
+
+    <!-- LOADING TEXT -->
+    <TextView
+        android:id="@+id/tvLoading"
+        android:text="⟳ Loading apps..."
+        android:textSize="13sp"
+        android:textColor="#64748B"
+        android:fontFamily="monospace"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone"/>
+
+    <!-- APP LIST -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvApps"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#0A0D14"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"/>
+
+</LinearLayout>

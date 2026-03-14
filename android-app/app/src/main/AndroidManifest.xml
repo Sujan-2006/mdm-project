@@ -60,6 +60,8 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name=".AppInventoryActivity" android:exported="false"/>
+
     </application>
 
 </manifest>

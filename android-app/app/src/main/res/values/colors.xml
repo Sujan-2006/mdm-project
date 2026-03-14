@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- App Inventory badge colors -->
+    <color name="badge_system_bg">#1F1900</color>
+    <color name="badge_system_text">#F59E0B</color>
+    <color name="badge_user_bg">#001A0D</color>
+    <color name="badge_user_text">#10D97E</color>
+
+    <!-- Filter button colors -->
+    <color name="filter_active_bg">#4F8EF7</color>
+    <color name="filter_active_text">#FFFFFF</color>
+    <color name="filter_inactive_text">#64748B</color>
 </resources>

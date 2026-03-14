@@ -81,7 +81,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"/>
 
-                <!-- Token Input -->
                 <TextView
                     android:text="Enrollment Token"
                     android:textSize="12sp"
@@ -100,7 +99,6 @@
                     android:background="@drawable/input_background"
                     android:layout_marginBottom="12dp"/>
 
-                <!-- Enroll Button -->
                 <Button
                     android:id="@+id/btnEnroll"
                     android:text="🔐 Enroll Device"
@@ -188,15 +186,35 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"/>
 
-                <Button
-                    android:id="@+id/btnSyncApps"
-                    android:text="📦 Sync App Inventory"
+                <!-- Sync + View buttons side by side -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="#6A1B9A"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginBottom="12dp"/>
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+
+                    <Button
+                        android:id="@+id/btnSyncApps"
+                        android:text="📦 Sync"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:backgroundTint="#6A1B9A"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:layout_marginEnd="8dp"/>
+
+                    <Button
+                        android:id="@+id/btnViewInventory"
+                        android:text="📋 View All Apps"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:backgroundTint="#0277BD"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"/>
+
+                </LinearLayout>
 
                 <!-- App Stats Row -->
                 <LinearLayout
@@ -205,7 +223,6 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="8dp">
 
-                    <!-- Total Apps -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -234,7 +251,6 @@
 
                     </LinearLayout>
 
-                    <!-- System Apps -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -264,7 +280,6 @@
 
                     </LinearLayout>
 
-                    <!-- User Apps -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
