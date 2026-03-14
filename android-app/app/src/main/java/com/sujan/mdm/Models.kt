@@ -30,3 +30,13 @@ data class EnrollResponse(
     val status: String,
     val deviceId: String
 )
+
+data class LocationRequest(
+    val deviceId: String,
+    val adminId: Long,
+    val latitude: Double,
+    val longitude: Double,
+    val accuracy: Float,
+    val model: String,
+    val manufacturer: String
+)

@@ -19,43 +19,33 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 public class MdmController {
 
-    @Autowired
-    private EnrolledDeviceRepository enrolledDeviceRepository;
+    @Autowired private EnrolledDeviceRepository enrolledDeviceRepository;
+    @Autowired private DeviceInfoRepository deviceInfoRepository;
+    @Autowired private AppInventoryRepository appInventoryRepository;
+    @Autowired private AppActivityLogRepository activityLogRepository;
+    @Autowired private EnrollmentTokenRepository enrollmentTokenRepository;
+    @Autowired private DeviceLocationRepository deviceLocationRepository;
 
-    @Autowired
-    private DeviceInfoRepository deviceInfoRepository;
-
-    @Autowired
-    private AppInventoryRepository appInventoryRepository;
-
-    @Autowired
-    private AppActivityLogRepository activityLogRepository;
-
-    @Autowired
-    private EnrollmentTokenRepository enrollmentTokenRepository;
-
-    // ── Enroll with token validation ──
+    // ── Enroll ──
     @PostMapping("/enroll")
     public ResponseEntity<String> enrollDevice(@RequestBody EnrolledDevice device) {
         try {
-            if (enrolledDeviceRepository.existsByDeviceId(device.getDeviceId())) {
+            if (enrolledDeviceRepository.existsByDeviceId(device.getDeviceId()))
                 return ResponseEntity.ok("Device already enrolled");
-            }
+
             Optional<EnrollmentToken> tokenOpt =
                     enrollmentTokenRepository.findByToken(device.getEnrollmentToken());
-            if (tokenOpt.isEmpty()) {
+            if (tokenOpt.isEmpty())
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid enrollment token!");
-            }
+
             EnrollmentToken token = tokenOpt.get();
-            if (!token.isActive()) {
+            if (!token.isActive())
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enrollment token is disabled!");
-            }
-            if (token.getExpiresAt() != null && token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            if (token.getExpiresAt() != null && token.getExpiresAt().isBefore(LocalDateTime.now()))
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enrollment token has expired!");
-            }
-            if (token.getCurrentUses() >= token.getMaxUses()) {
+            if (token.getCurrentUses() >= token.getMaxUses())
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enrollment token has reached maximum uses!");
-            }
+
             device.setAdminId(token.getAdminId());
             device.setEnrolledAt(LocalDateTime.now());
             enrolledDeviceRepository.save(device);
@@ -83,7 +73,29 @@ public class MdmController {
         return ResponseEntity.ok("App inventory saved");
     }
 
-    // ── GET endpoints for dashboard ──
+    // ── Location endpoints ──
+    @PostMapping("/api/device-location")
+    public ResponseEntity<?> saveLocation(@RequestBody DeviceLocation location) {
+        location.setTimestamp(LocalDateTime.now());
+        deviceLocationRepository.save(location);
+        return ResponseEntity.ok("Location saved");
+    }
+
+    @GetMapping("/api/device-locations")
+    public ResponseEntity<List<DeviceLocation>> getLocations(@RequestParam Long adminId) {
+        return ResponseEntity.ok(
+                deviceLocationRepository.findLatestLocationPerDevice(adminId));
+    }
+
+    @GetMapping("/api/device-location/{deviceId}")
+    public ResponseEntity<?> getDeviceLocation(@PathVariable String deviceId) {
+        return deviceLocationRepository
+                .findTopByDeviceIdOrderByTimestampDesc(deviceId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ── GET endpoints ──
     @GetMapping("/api/devices")
     public ResponseEntity<List<EnrolledDevice>> getAllDevices(@RequestParam Long adminId) {
         return ResponseEntity.ok(enrolledDeviceRepository.findByAdminId(adminId));
@@ -105,14 +117,14 @@ public class MdmController {
         return ResponseEntity.ok(appInventoryRepository.findByDeviceId(deviceId));
     }
 
-    // ── DELETE device — wipes ALL data for that device ──
+    // ── DELETE device — wipes ALL data ──
     @DeleteMapping("/api/devices/{deviceId}")
     public ResponseEntity<?> deleteDevice(@PathVariable String deviceId) {
         try {
-            // Delete all related data in correct order
             activityLogRepository.deleteByDeviceId(deviceId);
             appInventoryRepository.deleteByDeviceId(deviceId);
             deviceInfoRepository.deleteByDeviceId(deviceId);
+            deviceLocationRepository.deleteByDeviceId(deviceId);
             enrolledDeviceRepository.deleteByDeviceId(deviceId);
             return ResponseEntity.ok("Device and all associated data deleted successfully");
         } catch (Exception e) {
@@ -146,9 +158,8 @@ public class MdmController {
     @PostMapping("/api/tokens")
     public ResponseEntity<?> createToken(@RequestBody EnrollmentToken token) {
         try {
-            if (token.getToken() == null || token.getToken().isEmpty()) {
+            if (token.getToken() == null || token.getToken().isEmpty())
                 token.setToken(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-            }
             token.setCreatedAt(LocalDateTime.now());
             token.setCurrentUses(0);
             token.setActive(true);

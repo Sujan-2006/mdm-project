@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MDM Admin Console</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
     <style>
         [data-theme="dark"] {
             --bg:#0a0d14; --surface:#111520; --surface2:#161b2e; --border:#1e2640;
@@ -43,12 +44,12 @@
         .app-shell.visible{display:flex;}
         .theme-toggle{position:relative;width:52px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:50px;cursor:pointer;transition:all .3s;flex-shrink:0;}
         .theme-toggle::before{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 2px 8px rgba(79,142,247,.4);}
-        [data-theme="light"] .theme-toggle::before{transform:translateX(24px);background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 2px 8px rgba(245,158,11,.4);}
+        [data-theme="light"] .theme-toggle::before{transform:translateX(24px);background:linear-gradient(135deg,#f59e0b,#ef4444);}
         .theme-toggle-wrap{display:flex;align-items:center;gap:8px;}
         .theme-icon{font-size:14px;}
         .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;transition:background .3s,border-color .3s;box-shadow:2px 0 12px var(--shadow);}
         .logo{padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:20px;}
-        .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px;box-shadow:0 4px 12px rgba(79,142,247,.3);}
+        .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px;}
         .logo h2{font-size:13px;font-weight:800;letter-spacing:.06em;}
         .logo p{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
         .admin-badge{margin:0 12px 16px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:10px;padding:10px 12px;}
@@ -59,7 +60,6 @@
         .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all .15s;border-left:2px solid transparent;}
         .nav-item:hover{background:var(--surface2);color:var(--text);}
         .nav-item.active{background:rgba(79,142,247,.1);color:var(--accent);border-left-color:var(--accent);}
-        [data-theme="light"] .nav-item.active{background:rgba(37,99,235,.08);}
         .nav-item .ico{font-size:15px;width:18px;text-align:center;}
         .sidebar-footer{margin-top:auto;padding:16px 20px 0;border-top:1px solid var(--border);}
         .dot{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:6px;animation:blink 2s infinite;}
@@ -68,7 +68,7 @@
         .refresh-indicator{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--green);display:flex;align-items:center;gap:6px;}
         .refresh-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;}
         .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-        .topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0;box-shadow:0 2px 8px var(--shadow);transition:background .3s,border-color .3s;}
+        .topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0;box-shadow:0 2px 8px var(--shadow);}
         .topbar-title{font-size:15px;font-weight:700;flex:1;}
         .topbar-clock{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
         .topbar-btn{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;transition:all .15s;}
@@ -236,6 +236,17 @@
         .st-empty{text-align:center;padding:48px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
         .st-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 16px;color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
         .st-ok{background:rgba(16,217,126,.08);border:1px solid rgba(16,217,126,.2);border-radius:8px;padding:12px 16px;color:var(--green);font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+
+        /* MAP PAGE */
+        #map { height: 500px; border-radius: 12px; border: 1px solid var(--border); margin-top: 16px; }
+        .map-device-list { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 12px; margin-bottom: 20px; }
+        .map-device-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all .2s; }
+        .map-device-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+        .map-device-card.no-loc { opacity: 0.5; cursor: default; }
+        .map-device-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .map-device-coords { font-size:10px; font-family:'JetBrains Mono',monospace; color: var(--accent); margin-bottom: 3px; }
+        .map-device-time { font-size: 10px; font-family:'JetBrains Mono',monospace; color: var(--muted); }
+        .map-no-loc { font-size: 10px; font-family:'JetBrains Mono',monospace; color: var(--red); }
     </style>
 </head>
 <body>
@@ -287,6 +298,7 @@
         <div class="nav-section">
             <div class="nav-label">Management</div>
             <div class="nav-item" onclick="showPage('devices',this)"><span class="ico">📱</span> Devices</div>
+            <div class="nav-item" onclick="showPage('location',this)"><span class="ico">📍</span> Device Location</div>
             <div class="nav-item" onclick="showPage('tokens',this)"><span class="ico">🔑</span> Tokens</div>
             <div class="nav-item" onclick="showPage('qr',this)"><span class="ico">📷</span> QR Enrollment</div>
         </div>
@@ -314,6 +326,7 @@
         </div>
 
         <div class="content">
+
             <!-- DASHBOARD -->
             <div class="page active" id="page-dashboard">
                 <div class="stats-row">
@@ -329,6 +342,13 @@
             <div class="page" id="page-devices">
                 <div class="sec-hdr">All Enrolled Devices</div>
                 <div id="allCards"><div class="st-loading">⟳ Loading devices...</div></div>
+            </div>
+
+            <!-- LOCATION MAP PAGE -->
+            <div class="page" id="page-location">
+                <div class="sec-hdr">📍 Device Location Tracking <span style="margin-left:auto;font-size:9px;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:400;">Last known location per device</span></div>
+                <div id="locationDeviceList" class="map-device-list"><div class="st-loading">⟳ Loading locations...</div></div>
+                <div id="map"></div>
             </div>
 
             <!-- TOKENS -->
@@ -382,6 +402,7 @@
                     </ul>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -418,12 +439,14 @@
     <div class="ap-body" id="apBody"><div class="ap-state">⟳ Loading apps...</div></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
     const API = 'https://mdm-project-production.up.railway.app';
     let allApps = [], qrInst = null;
     let adminId = null, adminUsername = null;
     let apFilter = 'all';
+    let leafletMap = null, mapMarkers = [];
 
     function toggleTheme() {
         const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -521,10 +544,11 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('page-' + name).classList.add('active');
         el.classList.add('active');
-        const t = { dashboard:'Dashboard', devices:'All Devices', tokens:'Token Management', qr:'QR Enrollment' };
+        const t = { dashboard:'Dashboard', devices:'All Devices', location:'Device Location', tokens:'Token Management', qr:'QR Enrollment' };
         document.getElementById('pageTitle').textContent = t[name];
-        if (name === 'devices') renderCards('allCards');
-        if (name === 'tokens')  loadTokens();
+        if (name === 'devices')  renderCards('allCards');
+        if (name === 'tokens')   loadTokens();
+        if (name === 'location') loadLocationMap();
     }
     function refresh() { loadStats(); loadActivityLog(); }
 
@@ -544,7 +568,7 @@
             const res  = await fetch(`${API}/api/activity-log?adminId=${adminId}`);
             const logs = await res.json();
             if (!logs.length) {
-                feed.innerHTML = `<div class="activity-wrap"><div class="al-empty"><div class="al-empty-ico">📭</div>No app activity yet. Install or uninstall an app on an enrolled device.</div></div>`;
+                feed.innerHTML = `<div class="activity-wrap"><div class="al-empty"><div class="al-empty-ico">📭</div>No app activity yet.</div></div>`;
                 return;
             }
             const rows = logs.map(log => {
@@ -579,6 +603,81 @@
         return Math.floor(diff / 86400) + 'd ago';
     }
 
+    /* ═══════════════════════════════════════
+       LOCATION MAP
+    ═══════════════════════════════════════ */
+    async function loadLocationMap() {
+        const listEl = document.getElementById('locationDeviceList');
+        listEl.innerHTML = '<div class="st-loading">⟳ Loading locations...</div>';
+
+        // Init Leaflet map only once
+        if (!leafletMap) {
+            leafletMap = L.map('map').setView([20.5937, 78.9629], 5); // India default
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(leafletMap);
+        }
+
+        // Clear old markers
+        mapMarkers.forEach(m => leafletMap.removeLayer(m));
+        mapMarkers = [];
+
+        try {
+            const res       = await fetch(`${API}/api/device-locations?adminId=${adminId}`);
+            const locations = await res.json();
+
+            if (!locations.length) {
+                listEl.innerHTML = '<div class="st-empty">📍 No location data yet. Wait for the next sync (15 mins) after installing the updated app.</div>';
+                return;
+            }
+
+            const bounds = [];
+
+            listEl.innerHTML = `<div class="map-device-list">${locations.map(loc => {
+                const shortId = (loc.deviceId || '').substring(0, 16) + '…';
+                const time    = timeAgo(loc.timestamp);
+                return `<div class="map-device-card" onclick="flyToDevice(${loc.latitude}, ${loc.longitude}, '${loc.deviceId}')">
+                    <div class="map-device-name">📱 ${loc.model || 'Unknown'} (${loc.manufacturer || '—'})</div>
+                    <div class="map-device-coords">📍 ${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}</div>
+                    <div class="map-device-time">🕐 ${time} · ±${Math.round(loc.accuracy || 0)}m accuracy</div>
+                    <div style="font-size:9px;font-family:monospace;color:var(--muted);margin-top:2px">${shortId}</div>
+                </div>`;
+            }).join('')}</div>`;
+
+            locations.forEach((loc, i) => {
+                const marker = L.marker([loc.latitude, loc.longitude])
+                    .addTo(leafletMap)
+                    .bindPopup(`
+                        <b>📱 ${loc.model || 'Unknown Device'}</b><br>
+                        ${loc.manufacturer || ''}<br>
+                        <small>${(loc.deviceId || '').substring(0,20)}...</small><br>
+                        📍 ${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}<br>
+                        🕐 ${timeAgo(loc.timestamp)}<br>
+                        ±${Math.round(loc.accuracy || 0)}m accuracy
+                    `);
+                mapMarkers.push(marker);
+                bounds.push([loc.latitude, loc.longitude]);
+            });
+
+            if (bounds.length > 0) {
+                leafletMap.fitBounds(bounds, { padding: [40, 40] });
+            }
+
+        } catch(e) {
+            listEl.innerHTML = `<div class="st-err">❌ Failed to load locations: ${e.message}</div>`;
+        }
+    }
+
+    function flyToDevice(lat, lng, deviceId) {
+        leafletMap.flyTo([lat, lng], 15, { animate: true, duration: 1.5 });
+        mapMarkers.forEach(m => {
+            const pos = m.getLatLng();
+            if (Math.abs(pos.lat - lat) < 0.0001 && Math.abs(pos.lng - lng) < 0.0001) {
+                m.openPopup();
+            }
+        });
+    }
+
     /* DEVICE CARDS */
     async function renderCards(cid) {
         const c = document.getElementById(cid);
@@ -601,20 +700,13 @@
         } catch(e) { c.innerHTML = '<div class="st-err">❌ Failed to load devices</div>'; }
     }
 
-    /* DELETE DEVICE */
     async function deleteDevice(deviceId) {
-        if (!confirm(`⚠️ Delete this device?\n\nThis will permanently remove:\n• Enrollment record\n• Device info\n• App inventory\n• Activity logs\n\nThis cannot be undone!`)) return;
+        if (!confirm(`⚠️ Delete this device?\n\nThis will permanently remove:\n• Enrollment record\n• Device info\n• App inventory\n• Activity logs\n• Location data\n\nThis cannot be undone!`)) return;
         try {
             const res = await fetch(`${API}/api/devices/${deviceId}`, { method: 'DELETE' });
-            if (res.ok) {
-                renderCards('allCards');
-                loadStats();
-            } else {
-                alert('❌ Failed to delete device: ' + await res.text());
-            }
-        } catch(e) {
-            alert('❌ Error: ' + e.message);
-        }
+            if (res.ok) { renderCards('allCards'); loadStats(); }
+            else { alert('❌ Failed to delete device: ' + await res.text()); }
+        } catch(e) { alert('❌ Error: ' + e.message); }
     }
 
     async function viewInfo(deviceId) {
@@ -625,7 +717,7 @@
             const res = await fetch(`${API}/api/devices/${deviceId}/info`);
             if (!res.ok) { document.getElementById('infoGrid').innerHTML = '<div class="st-err">❌ Error loading device info</div>'; return; }
             const info = await res.json();
-            if (!info || Object.keys(info).length === 0) { document.getElementById('infoGrid').innerHTML = '<div class="st-err">⚠ No device info yet. Open app → Collect Device Info</div>'; return; }
+            if (!info || Object.keys(info).length === 0) { document.getElementById('infoGrid').innerHTML = '<div class="st-err">⚠ No device info yet.</div>'; return; }
             const fields = [['Device ID',info.deviceId],['Model',info.model],['Manufacturer',info.manufacturer],['Android',info.osVersion],['SDK',info.sdkVersion],['UUID',info.uuid],['Serial',info.serial]];
             document.getElementById('infoGrid').innerHTML = `<div class="info-grid">${fields.map(([k,v]) => `<div class="info-item"><div class="info-k">${k}</div><div class="info-v">${v||'N/A'}</div></div>`).join('')}</div>`;
         } catch(e) { document.getElementById('infoGrid').innerHTML = `<div class="st-err">❌ ${e.message}</div>`; }
@@ -645,7 +737,7 @@
         try {
             const res = await fetch(`${API}/api/devices/${deviceId}/apps`);
             allApps   = await res.json();
-            if (!allApps.length) { document.getElementById('apBody').innerHTML = '<div class="ap-state">⚠ No apps found. Open app → Sync App Inventory</div>'; return; }
+            if (!allApps.length) { document.getElementById('apBody').innerHTML = '<div class="ap-state">⚠ No apps found.</div>'; return; }
             const sys  = allApps.filter(a => a.isSystemApp).length;
             const user = allApps.filter(a => !a.isSystemApp).length;
             document.getElementById('apStatTotal').textContent = allApps.length;

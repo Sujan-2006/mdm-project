@@ -1,5 +1,6 @@
 package com.sujan.mdm
 
+import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -7,12 +8,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +39,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var devicePolicyManager: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
+
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST = 1001
+    }
 
     private val deviceId: String by lazy {
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
@@ -72,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         checkEnrollmentStatus()
         checkDeviceOwnerStatus()
         restoreAppCounts()
+        requestLocationPermission()
 
         val prefs = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
         if (prefs.getBoolean("is_enrolled", false) &&
@@ -106,13 +114,44 @@ class MainActivity : AppCompatActivity() {
 
         btnSyncApps.setOnClickListener { syncAppInventory() }
 
-        // ── Open App Inventory Screen ──
         btnViewInventory.setOnClickListener {
             startActivity(Intent(this, AppInventoryActivity::class.java))
         }
 
         handleProvisioningIntent()
         scheduleBackgroundSync()
+    }
+
+    // ── Request Location Permission ───────────────────────────────────────
+    private fun requestLocationPermission() {
+        val fineLocation   = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        val coarseLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        if (fineLocation != PackageManager.PERMISSION_GRANTED ||
+            coarseLocation != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                LOCATION_PERMISSION_REQUEST
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST) {
+            if (grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                tvSyncStatus.text = "📍 Location permission granted!"
+            }
+        }
     }
 
     override fun onResume() {
@@ -129,11 +168,9 @@ class MainActivity : AppCompatActivity() {
                 (pkg.applicationInfo?.flags ?: 0) and ApplicationInfo.FLAG_SYSTEM != 0
             }
             val user = total - system
-
             tvTotalApps.text  = total.toString()
             tvSystemApps.text = system.toString()
             tvUserApps.text   = user.toString()
-
             if (total > 0) {
                 tvSyncStatus.text = "✅ App inventory synced!\n\n📦 Total  : $total\n⚙️ System : $system\n👤 User   : $user"
                 getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()

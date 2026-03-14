@@ -26,6 +26,9 @@ interface ApiService {
 
     @GET("/api/device-admin")
     suspend fun getAdminIdForDevice(@Query("deviceId") deviceId: String): Response<AdminIdResponse>
+
+    @POST("/api/device-location")
+    suspend fun sendLocation(@Body location: LocationRequest): Response<ResponseBody>
 }
 
 object RetrofitClient {
