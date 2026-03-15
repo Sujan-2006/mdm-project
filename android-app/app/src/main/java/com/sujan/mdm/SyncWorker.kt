@@ -31,9 +31,8 @@ class SyncWorker(
             val adminId  = prefs.getLong("admin_id", -1L)
 
             val pm       = applicationContext.packageManager
-            // Use MATCH_DISABLED_COMPONENTS to include hidden apps in inventory
-            val packageFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS else 0
+            // MATCH_UNINSTALLED_PACKAGES includes apps hidden via setApplicationHidden()
+            val packageFlags = android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
             val packages = withContext(Dispatchers.IO) { pm.getInstalledPackages(packageFlags) }
 
             // ── Build current app list ────────────────────────────────────
@@ -192,23 +191,7 @@ class SyncWorker(
             }
 
             // ── Sync full inventory to backend ────────────────────────────
-            // Hidden apps disappear from getInstalledPackages — add them back using saved name map
-            val hiddenApps = blockedPackages
-                .filter { pkg -> apps.none { it.packageName == pkg } }
-                .mapNotNull { pkg ->
-                    val name     = savedNameMap[pkg] ?: pkg
-                    val isSysApp = savedSystemMap[pkg] ?: false
-                    AppItem(
-                        deviceId      = deviceId,
-                        appName       = name,
-                        packageName   = pkg,
-                        versionName   = "N/A",
-                        versionCode   = 0,
-                        isSystemApp   = isSysApp,
-                        installSource = "Unknown"
-                    )
-                }
-            RetrofitClient.instance.sendApps(apps + hiddenApps)
+            RetrofitClient.instance.sendApps(apps)
 
             // ── Enforce app restrictions ──────────────────────────────────
             enforceRestrictions(blockedPackages)
@@ -239,8 +222,7 @@ class SyncWorker(
         }
 
         val pm = applicationContext.packageManager
-        val hiddenFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS else 0
-        val installedPackages = pm.getInstalledPackages(hiddenFlag).map { it.packageName }.toSet()
+        val installedPackages = pm.getInstalledPackages(android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES).map { it.packageName }.toSet()
 
         // Hide every blocked package that is installed
         for (pkg in blockedPackages) {
