@@ -171,20 +171,38 @@ class SyncWorker(
                 } catch (e: Exception) { e.printStackTrace() }
             }
 
-            // ── Sync full inventory to backend ────────────────────────────
-            RetrofitClient.instance.sendApps(apps)
-
-            // ── Enforce app restrictions ──────────────────────────────────
+            // ── Fetch restrictions first ─────────────────────────────────
+            var blockedPackages = emptyList<String>()
             try {
                 val response = RetrofitClient.instance.getRestrictedPackages(deviceId)
                 if (response.isSuccessful) {
-                    val blockedPackages = response.body() ?: emptyList<String>()
+                    blockedPackages = response.body() ?: emptyList()
                     android.util.Log.d("SyncWorker", "Blocked packages from server: $blockedPackages")
-                    enforceRestrictions(blockedPackages)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("SyncWorker", "Failed to fetch restrictions: ${e.message}")
             }
+
+            // ── Sync full inventory to backend ────────────────────────────
+            // Hidden apps disappear from getInstalledPackages — add them back using saved name map
+            val hiddenApps = blockedPackages
+                .filter { pkg -> apps.none { it.packageName == pkg } }
+                .mapNotNull { pkg ->
+                    val name = savedNameMap[pkg] ?: pkg
+                    AppItem(
+                        deviceId      = deviceId,
+                        appName       = name,
+                        packageName   = pkg,
+                        versionName   = "N/A",
+                        versionCode   = 0,
+                        isSystemApp   = false,
+                        installSource = "Unknown"
+                    )
+                }
+            RetrofitClient.instance.sendApps(apps + hiddenApps)
+
+            // ── Enforce app restrictions ──────────────────────────────────
+            enforceRestrictions(blockedPackages)
 
             Result.success()
 
