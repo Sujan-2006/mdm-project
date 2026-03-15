@@ -87,7 +87,8 @@ class SyncWorker(
             val blockedSet = if (blockedRaw.isEmpty()) emptySet()
             else blockedRaw.split(",").toSet()
 
-            val newlyInstalled   = currentPackages - savedPackages
+            // Exclude blocked packages from install detection — hidden apps reappearing is NOT a new install
+            val newlyInstalled   = (currentPackages - savedPackages) - blockedSet
             // Exclude blocked packages from uninstall detection — hidden apps are NOT uninstalled
             val newlyUninstalled = (savedPackages - currentPackages) - blockedSet
 
