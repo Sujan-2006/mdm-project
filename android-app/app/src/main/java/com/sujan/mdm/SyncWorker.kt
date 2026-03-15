@@ -30,12 +30,31 @@ class SyncWorker(
             val deviceId = prefs.getString("device_id", "UNKNOWN") ?: "UNKNOWN"
             val adminId  = prefs.getLong("admin_id", -1L)
 
-            val pm       = applicationContext.packageManager
-            // MATCH_UNINSTALLED_PACKAGES includes apps hidden via setApplicationHidden()
-            val packageFlags = android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
-            val packages = withContext(Dispatchers.IO) { pm.getInstalledPackages(packageFlags) }
+            val pm = applicationContext.packageManager
 
-            // ── Build current app list ────────────────────────────────────
+            // ── Step 1: Fetch blocked packages from server FIRST ──────────
+            // We need this before building app list so we can include hidden apps
+            var blockedPackages = emptyList<String>()
+            try {
+                val response = RetrofitClient.instance.getRestrictedPackages(deviceId)
+                if (response.isSuccessful) {
+                    blockedPackages = response.body() ?: emptyList()
+                    android.util.Log.d("SyncWorker", "Blocked packages from server: $blockedPackages")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SyncWorker", "Failed to fetch restrictions: ${e.message}")
+            }
+
+            // ── Step 2: Enforce restrictions immediately ──────────────────
+            enforceRestrictions(blockedPackages)
+
+            // ── Step 3: Build app list (use getInstalledPackages normally) ─
+            // After enforcing restrictions, get ALL packages including hidden ones
+            // by using MATCH_UNINSTALLED_PACKAGES flag
+            val packages = withContext(Dispatchers.IO) {
+                pm.getInstalledPackages(android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES)
+            }
+
             val apps = packages.mapNotNull { pkg ->
                 val appInfo = pkg.applicationInfo ?: return@mapNotNull null
                 AppItem(
@@ -58,41 +77,28 @@ class SyncWorker(
 
             val currentPackages = apps.map { it.packageName }.toSet()
 
-            // ── Load previously saved data ────────────────────────────────
+            // ── Step 4: Load previously saved package list ────────────────
             val savedPackagesRaw = prefs.getString("saved_package_list", "") ?: ""
             val isFirstRun       = savedPackagesRaw.isEmpty()
             val savedPackages    = if (isFirstRun) emptySet()
             else savedPackagesRaw.split(",").toSet()
 
             val savedNameMapRaw = prefs.getString("saved_app_name_map", "") ?: ""
-            // Map stores: packageName -> "appName|isSystemApp"
             val savedNameMap    = mutableMapOf<String, String>()
-            val savedSystemMap  = mutableMapOf<String, Boolean>()
             if (savedNameMapRaw.isNotEmpty()) {
                 savedNameMapRaw.split("||").forEach { entry ->
                     val idx = entry.indexOf('=')
-                    if (idx > 0) {
-                        val pkg   = entry.substring(0, idx)
-                        val value = entry.substring(idx + 1)
-                        val parts = value.split("|")
-                        savedNameMap[pkg]   = parts[0]
-                        savedSystemMap[pkg] = parts.getOrNull(1) == "true"
-                    }
+                    if (idx > 0) savedNameMap[entry.substring(0, idx)] = entry.substring(idx + 1)
                 }
             }
 
-            // ── Detect installs and uninstalls ────────────────────────────
-            // Load currently blocked packages so we don't log hide/unhide as install/uninstall
-            val blockedRaw = prefs.getString("blocked_packages", "") ?: ""
-            val blockedSet = if (blockedRaw.isEmpty()) emptySet()
-            else blockedRaw.split(",").toSet()
-
-            // Exclude blocked packages from install detection — hidden apps reappearing is NOT a new install
+            // ── Step 5: Detect REAL installs/uninstalls ───────────────────
+            // Exclude blocked packages — they are hidden/unhidden, not installed/uninstalled
+            val blockedSet       = blockedPackages.toSet()
             val newlyInstalled   = (currentPackages - savedPackages) - blockedSet
-            // Exclude blocked packages from uninstall detection — hidden apps are NOT uninstalled
             val newlyUninstalled = (savedPackages - currentPackages) - blockedSet
 
-            // ── Post activity log — SKIP on first run ─────────────────────
+            // ── Step 6: Post activity log ─────────────────────────────────
             if (!isFirstRun && adminId != -1L &&
                 (newlyInstalled.isNotEmpty() || newlyUninstalled.isNotEmpty())) {
 
@@ -141,14 +147,14 @@ class SyncWorker(
                 }
             }
 
-            // ── Save current package list and name map ────────────────────
-            val newNameMap = apps.joinToString("||") { "${it.packageName}=${it.appName}|${it.isSystemApp}" }
+            // ── Step 7: Save current package list and name map ────────────
+            val newNameMap = apps.joinToString("||") { "${it.packageName}=${it.appName}" }
             prefs.edit()
                 .putString("saved_package_list", currentPackages.joinToString(","))
                 .putString("saved_app_name_map", newNameMap)
                 .apply()
 
-            // ── Ping backend to update lastSeen timestamp ─────────────────
+            // ── Step 8: Ping backend to update lastSeen ───────────────────
             try {
                 val pingReq = Request.Builder()
                     .url("https://mdm-project-production.up.railway.app/api/device-ping?deviceId=$deviceId")
@@ -157,7 +163,7 @@ class SyncWorker(
                 OkHttpClient().newCall(pingReq).execute().close()
             } catch (e: Exception) { e.printStackTrace() }
 
-            // ── Send location to backend ──────────────────────────────────
+            // ── Step 9: Send location ─────────────────────────────────────
             if (adminId != -1L) {
                 try {
                     android.util.Log.d("SyncWorker", "Fetching location for deviceId=$deviceId adminId=$adminId")
@@ -179,23 +185,8 @@ class SyncWorker(
                 } catch (e: Exception) { e.printStackTrace() }
             }
 
-            // ── Fetch restrictions first ─────────────────────────────────
-            var blockedPackages = emptyList<String>()
-            try {
-                val response = RetrofitClient.instance.getRestrictedPackages(deviceId)
-                if (response.isSuccessful) {
-                    blockedPackages = response.body() ?: emptyList()
-                    android.util.Log.d("SyncWorker", "Blocked packages from server: $blockedPackages")
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("SyncWorker", "Failed to fetch restrictions: ${e.message}")
-            }
-
-            // ── Sync full inventory to backend ────────────────────────────
+            // ── Step 10: Sync full inventory to backend ───────────────────
             RetrofitClient.instance.sendApps(apps)
-
-            // ── Enforce app restrictions ──────────────────────────────────
-            enforceRestrictions(blockedPackages)
 
             Result.success()
 
@@ -214,21 +205,22 @@ class SyncWorker(
         android.util.Log.d("SyncWorker", "isDeviceOwner=$isDeviceOwner")
 
         if (!isDeviceOwner) {
-            // Not device owner — cannot hide apps
-            // Still save blocked list to prefs so app can show a warning UI
+            android.util.Log.w("SyncWorker", "Not device owner — saving blocked list to prefs only")
             applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
                 .edit().putString("blocked_packages", blockedPackages.joinToString(",")).apply()
-            android.util.Log.w("SyncWorker", "Not device owner — saving blocked list to prefs only")
             return
         }
 
         val pm = applicationContext.packageManager
-        val installedPackages = pm.getInstalledPackages(android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES).map { it.packageName }.toSet()
+        // Use MATCH_UNINSTALLED_PACKAGES to get ALL packages including currently hidden ones
+        val allPackages = pm.getInstalledPackages(
+            android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
+        ).map { it.packageName }.toSet()
 
-        // Hide every blocked package that is installed
+        // Hide every blocked package
         for (pkg in blockedPackages) {
-            if (pkg == applicationContext.packageName) continue // never hide self
-            if (installedPackages.contains(pkg)) {
+            if (pkg == applicationContext.packageName) continue
+            if (allPackages.contains(pkg)) {
                 try {
                     dpm.setApplicationHidden(adminComponent, pkg, true)
                     android.util.Log.d("SyncWorker", "Hidden: $pkg")
@@ -238,20 +230,20 @@ class SyncWorker(
             }
         }
 
-        // Unhide ALL installed apps that are NOT in the current blocked list
-        // This handles reinstall/prefs-cleared scenarios correctly
-        for (pkg in installedPackages) {
+        // Unhide every package that is NOT in the blocked list
+        // This is the key fix — always unhide anything not blocked, regardless of previous state
+        for (pkg in allPackages) {
             if (pkg == applicationContext.packageName) continue
             if (!blockedPackages.contains(pkg)) {
                 try {
                     dpm.setApplicationHidden(adminComponent, pkg, false)
                 } catch (e: Exception) {
-                    // Some system packages can't be unhidden — ignore
+                    // Ignore — some system packages throw exceptions, that's fine
                 }
             }
         }
 
-        // Save current blocked list
+        // Save current blocked list to prefs
         applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
             .edit().putString("blocked_packages", blockedPackages.joinToString(",")).apply()
     }
@@ -270,7 +262,6 @@ class SyncWorker(
             return null
         }
 
-        // ── Try FusedLocation cached result first (instant) ──
         val fusedClient = LocationServices.getFusedLocationProviderClient(applicationContext)
         val cached = withTimeoutOrNull(3_000L) {
             suspendCancellableCoroutine<Location?> { cont ->
@@ -289,8 +280,6 @@ class SyncWorker(
             return cached
         }
 
-        // ── Vivo/FUNTOUCH fallback: use LocationManager directly ──
-        // FusedLocation is blocked by Vivo OS in background — LocationManager bypasses it
         android.util.Log.d("SyncWorker", "FusedLocation unavailable — trying LocationManager directly...")
         return withContext(Dispatchers.IO) {
             withTimeoutOrNull(15_000L) {
@@ -298,13 +287,11 @@ class SyncWorker(
                     val lm = applicationContext.getSystemService(Context.LOCATION_SERVICE)
                             as android.location.LocationManager
 
-                    // Try NETWORK provider first (cell towers + WiFi — works indoors)
                     val networkEnabled = lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
                     val gpsEnabled     = lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
 
                     android.util.Log.d("SyncWorker", "NetworkProvider=$networkEnabled GPSProvider=$gpsEnabled")
 
-                    // Try getLastKnownLocation — totally synchronous, instant
                     if (networkEnabled) {
                         val last = lm.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
                         if (last != null) {
@@ -322,10 +309,8 @@ class SyncWorker(
                         }
                     }
 
-                    // No last known — request a fresh one via NETWORK provider
                     val handlerThread = android.os.HandlerThread("loc-lm-${System.currentTimeMillis()}")
                     handlerThread.start()
-                    val handler = android.os.Handler(handlerThread.looper)
 
                     val listener = object : android.location.LocationListener {
                         override fun onLocationChanged(location: android.location.Location) {
