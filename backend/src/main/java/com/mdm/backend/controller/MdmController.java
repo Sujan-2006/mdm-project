@@ -25,6 +25,7 @@ public class MdmController {
     @Autowired private AppActivityLogRepository activityLogRepository;
     @Autowired private EnrollmentTokenRepository enrollmentTokenRepository;
     @Autowired private DeviceLocationRepository deviceLocationRepository;
+    @Autowired private AppRestrictionRepository appRestrictionRepository;
 
     // ── Enroll ──
     @PostMapping("/enroll")
@@ -227,5 +228,47 @@ public class MdmController {
                     return ResponseEntity.ok(res);
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ── App Restrictions ──────────────────────────────────────────────────
+
+    // GET all blocked apps for an admin
+    @GetMapping("/api/restrictions")
+    public ResponseEntity<List<AppRestriction>> getRestrictions(@RequestParam Long adminId) {
+        return ResponseEntity.ok(appRestrictionRepository.findByAdminId(adminId));
+    }
+
+    // GET blocked package names only — called by Android device on every sync
+    @GetMapping("/api/restrictions/packages")
+    public ResponseEntity<List<String>> getRestrictedPackages(@RequestParam String deviceId) {
+        return enrolledDeviceRepository.findByDeviceId(deviceId)
+                .map(device -> {
+                    List<String> packages = appRestrictionRepository
+                            .findByAdminId(device.getAdminId())
+                            .stream()
+                            .map(AppRestriction::getPackageName)
+                            .toList();
+                    return ResponseEntity.ok(packages);
+                })
+                .orElse(ResponseEntity.ok(List.of()));
+    }
+
+    // POST block an app
+    @PostMapping("/api/restrictions")
+    public ResponseEntity<?> blockApp(@RequestBody AppRestriction restriction) {
+        if (appRestrictionRepository.existsByAdminIdAndPackageName(
+                restriction.getAdminId(), restriction.getPackageName())) {
+            return ResponseEntity.badRequest().body("App already blocked");
+        }
+        restriction.setCreatedAt(LocalDateTime.now());
+        return ResponseEntity.ok(appRestrictionRepository.save(restriction));
+    }
+
+    // DELETE unblock an app
+    @DeleteMapping("/api/restrictions")
+    public ResponseEntity<?> unblockApp(@RequestParam Long adminId,
+                                        @RequestParam String packageName) {
+        appRestrictionRepository.deleteByAdminIdAndPackageName(adminId, packageName);
+        return ResponseEntity.ok("App unblocked");
     }
 }

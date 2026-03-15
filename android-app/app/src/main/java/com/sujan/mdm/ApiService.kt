@@ -29,6 +29,9 @@ interface ApiService {
 
     @POST("/api/device-location")
     suspend fun sendLocation(@Body location: LocationRequest): Response<ResponseBody>
+
+    @GET("/api/restrictions/packages")
+    suspend fun getRestrictedPackages(@Query("deviceId") deviceId: String): Response<List<String>>
 }
 
 object RetrofitClient {

@@ -244,6 +244,24 @@
         .token-form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
         .token-create-btn{background:linear-gradient(135deg,var(--green),#0ea65f);border:none;border-radius:8px;padding:10px 24px;color:white;font-size:13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;transition:opacity .15s;}
         .token-create-btn:hover{opacity:.9;}
+        .restr-form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px var(--shadow);}
+        .restr-form-title{font-size:13px;font-weight:700;margin-bottom:16px;}
+        .restr-form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:flex-end;margin-bottom:14px;}
+        .restr-field{display:flex;flex-direction:column;gap:6px;}
+        .restr-block-btn{background:linear-gradient(135deg,#e53e3e,#c53030);border:none;border-radius:8px;padding:10px 20px;color:white;font-size:13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+        .restr-block-btn:hover{opacity:.9;}
+        .restr-hint{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid var(--accent);}
+        .restr-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;}
+        .restr-row:hover{background:var(--surface2);}
+        .restr-row:last-child{border-bottom:none;}
+        .restr-badge{background:rgba(229,62,62,.12);color:#e53e3e;border:1px solid rgba(229,62,62,.3);border-radius:6px;padding:3px 8px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.05em;}
+        .restr-name{flex:1;font-size:13px;font-weight:600;color:var(--text);}
+        .restr-pkg{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+        .restr-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;}
+        .restr-unblock-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+        .restr-unblock-btn:hover{border-color:var(--green);color:var(--green);}
+        .restr-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;font-family:'JetBrains Mono',monospace;}
+        .restr-table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
         .tbl-action-btn{padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;font-size:10px;font-family:'Syne',sans-serif;font-weight:600;transition:all .15s;}
         .tbl-action-btn:hover{border-color:var(--accent);color:var(--accent);}
         .tbl-action-btn.del:hover{border-color:var(--red);color:var(--red);}
@@ -316,6 +334,7 @@
             <div class="nav-label">Management</div>
             <div class="nav-item" onclick="showPage('devices',this)"><span class="ico">📱</span> Devices</div>
             <div class="nav-item" onclick="showPage('location',this)"><span class="ico">📍</span> Device Location</div>
+            <div class="nav-item" onclick="showPage('restrictions',this)"><span class="ico">🚫</span> App Restrictions</div>
             <div class="nav-item" onclick="showPage('tokens',this)"><span class="ico">🔑</span> Tokens</div>
             <div class="nav-item" onclick="showPage('qr',this)"><span class="ico">📷</span> QR Enrollment</div>
         </div>
@@ -407,6 +426,28 @@
                         <li><span class="step-n">7</span>Device appears in dashboard automatically ✓</li>
                     </ul>
                 </div>
+            </div>
+
+            <div class="page" id="page-restrictions">
+                <div class="sec-hdr" style="margin-bottom:20px">🚫 App Restriction Management</div>
+                <div class="restr-form-card">
+                    <div class="restr-form-title">➕ Block an App</div>
+                    <div id="restrMsg"></div>
+                    <div class="restr-form-row">
+                        <div class="restr-field">
+                            <label class="flbl">App Name <span style="color:var(--muted);font-weight:400">(for display)</span></label>
+                            <input class="finp" type="text" id="restrAppName" placeholder="e.g. Instagram">
+                        </div>
+                        <div class="restr-field">
+                            <label class="flbl">Package Name <span style="color:var(--muted);font-weight:400">(required)</span></label>
+                            <input class="finp" type="text" id="restrPkgName" placeholder="e.g. com.instagram.android">
+                        </div>
+                        <button class="restr-block-btn" onclick="blockApp()">🚫 Block App</button>
+                    </div>
+                    <div class="restr-hint">💡 Find package names in the app inventory panel on any device card. Blocked apps will be hidden on all enrolled devices within 15 minutes or immediately when the MDM app is opened.</div>
+                </div>
+                <div class="sec-hdr" style="margin-top:8px">Blocked Apps</div>
+                <div id="restrList"><div class="st-loading">⟳ Loading...</div></div>
             </div>
         </div>
 
@@ -559,7 +600,7 @@
     function showPage(name, el) {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
-        const t = { dashboard:'Dashboard', devices:'All Devices', location:'Device Location', tokens:'Token Management', qr:'QR Enrollment' };
+        const t = { dashboard:'Dashboard', devices:'All Devices', location:'Device Location', restrictions:'App Restrictions', tokens:'Token Management', qr:'QR Enrollment' };
         document.getElementById('pageTitle').textContent = t[name];
         if (name === 'location') {
             document.getElementById('normalContent').style.display = 'none';
@@ -570,8 +611,9 @@
             document.getElementById('page-location').classList.remove('active');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + name).classList.add('active');
-            if (name === 'devices') renderCards('allCards');
-            if (name === 'tokens')  loadTokens();
+            if (name === 'devices')      renderCards('allCards');
+            if (name === 'tokens')       loadTokens();
+            if (name === 'restrictions') loadRestrictions();
         }
     }
 
@@ -887,6 +929,69 @@
         if (!confirm('Delete this token? This cannot be undone!')) return;
         try { await fetch(`${API}/api/tokens/${id}`, {method:'DELETE'}); loadTokens(); }
         catch(e) { alert('Failed to delete token'); }
+    }
+
+    /* APP RESTRICTIONS */
+    async function loadRestrictions() {
+        const listEl = document.getElementById('restrList');
+        listEl.innerHTML = '<div class="st-loading">⟳ Loading...</div>';
+        try {
+            const res  = await fetch(`${API}/api/restrictions?adminId=${adminId}`);
+            const list = await res.json();
+            if (!list.length) {
+                listEl.innerHTML = '<div class="restr-table"><div class="restr-empty">✅ No apps blocked — all apps are allowed on enrolled devices</div></div>';
+                return;
+            }
+            listEl.innerHTML = `<div class="restr-table">${list.map(r => `
+                <div class="restr-row">
+                    <span class="restr-badge">BLOCKED</span>
+                    <div>
+                        <div class="restr-name">${r.appName || r.packageName}</div>
+                        <div class="restr-pkg">${r.packageName}</div>
+                    </div>
+                    <div class="restr-time">${timeAgo(r.createdAt)}</div>
+                    <button class="restr-unblock-btn" onclick="unblockApp('${r.packageName}')">✓ Unblock</button>
+                </div>`).join('')}</div>`;
+        } catch(e) {
+            listEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+        }
+    }
+
+    async function blockApp() {
+        const pkg     = document.getElementById('restrPkgName').value.trim();
+        const appName = document.getElementById('restrAppName').value.trim();
+        const msgEl   = document.getElementById('restrMsg');
+        if (!pkg) { msgEl.innerHTML = '<div class="st-err">❌ Package name is required</div>'; return; }
+        if (!pkg.includes('.')) { msgEl.innerHTML = '<div class="st-err">❌ Invalid package name — must contain a dot (e.g. com.instagram.android)</div>'; return; }
+        msgEl.innerHTML = '<div class="st-loading">⟳ Blocking...</div>';
+        try {
+            const res = await fetch(`${API}/api/restrictions`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ adminId, packageName: pkg, appName: appName || pkg })
+            });
+            if (res.ok) {
+                msgEl.innerHTML = '<div class="st-ok">✅ App blocked! Devices will hide it on next sync.</div>';
+                document.getElementById('restrPkgName').value = '';
+                document.getElementById('restrAppName').value = '';
+                loadRestrictions();
+            } else {
+                const txt = await res.text();
+                msgEl.innerHTML = `<div class="st-err">❌ ${txt}</div>`;
+            }
+        } catch(e) {
+            msgEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+        }
+    }
+
+    async function unblockApp(packageName) {
+        if (!confirm(`Unblock ${packageName}?\n\nThe app will become visible again on all devices on next sync.`)) return;
+        try {
+            await fetch(`${API}/api/restrictions?adminId=${adminId}&packageName=${encodeURIComponent(packageName)}`, { method:'DELETE' });
+            loadRestrictions();
+        } catch(e) {
+            alert('Failed to unblock: ' + e.message);
+        }
     }
 
     function closeOv(id) { document.getElementById(id).classList.remove('on'); }

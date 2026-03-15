@@ -5,14 +5,9 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.location.Location
 import android.os.Build
-import android.os.Looper
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -170,11 +165,80 @@ class SyncWorker(
             // ── Sync full inventory to backend ────────────────────────────
             RetrofitClient.instance.sendApps(apps)
 
+            // ── Enforce app restrictions ──────────────────────────────────
+            try {
+                val response = RetrofitClient.instance.getRestrictedPackages(deviceId)
+                if (response.isSuccessful) {
+                    val blockedPackages = response.body() ?: emptyList<String>()
+                    android.util.Log.d("SyncWorker", "Blocked packages from server: $blockedPackages")
+                    enforceRestrictions(blockedPackages)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SyncWorker", "Failed to fetch restrictions: ${e.message}")
+            }
+
             Result.success()
 
         } catch (e: Exception) {
             Result.retry()
         }
+    }
+
+    private fun enforceRestrictions(blockedPackages: List<String>) {
+        val dpm = applicationContext.getSystemService(Context.DEVICE_POLICY_SERVICE)
+                as android.app.admin.DevicePolicyManager
+        val adminComponent = android.content.ComponentName(
+            applicationContext, MyDeviceAdminReceiver::class.java)
+
+        val isDeviceOwner = dpm.isDeviceOwnerApp(applicationContext.packageName)
+        android.util.Log.d("SyncWorker", "isDeviceOwner=$isDeviceOwner")
+
+        if (!isDeviceOwner) {
+            // Not device owner — cannot hide apps
+            // Still save blocked list to prefs so app can show a warning UI
+            applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
+                .edit().putString("blocked_packages", blockedPackages.joinToString(",")).apply()
+            android.util.Log.w("SyncWorker", "Not device owner — saving blocked list to prefs only")
+            return
+        }
+
+        val pm = applicationContext.packageManager
+        val installedPackages = pm.getInstalledPackages(0).map { it.packageName }.toSet()
+
+        // Hide every blocked package that is installed
+        for (pkg in blockedPackages) {
+            if (pkg == applicationContext.packageName) continue // never hide self
+            if (installedPackages.contains(pkg)) {
+                try {
+                    dpm.setApplicationHidden(adminComponent, pkg, true)
+                    android.util.Log.d("SyncWorker", "Hidden: $pkg")
+                } catch (e: Exception) {
+                    android.util.Log.e("SyncWorker", "Failed to hide $pkg: ${e.message}")
+                }
+            }
+        }
+
+        // Unhide any previously blocked apps that are no longer blocked
+        val savedBlocked = applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
+            .getString("blocked_packages", "") ?: ""
+        val previouslyBlocked = if (savedBlocked.isEmpty()) emptySet()
+        else savedBlocked.split(",").toSet()
+        val nowUnblocked = previouslyBlocked - blockedPackages.toSet()
+
+        for (pkg in nowUnblocked) {
+            if (installedPackages.contains(pkg)) {
+                try {
+                    dpm.setApplicationHidden(adminComponent, pkg, false)
+                    android.util.Log.d("SyncWorker", "Unhidden: $pkg")
+                } catch (e: Exception) {
+                    android.util.Log.e("SyncWorker", "Failed to unhide $pkg: ${e.message}")
+                }
+            }
+        }
+
+        // Save current blocked list
+        applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
+            .edit().putString("blocked_packages", blockedPackages.joinToString(",")).apply()
     }
 
     @SuppressLint("MissingPermission")
@@ -187,18 +251,17 @@ class SyncWorker(
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
         if (!fineOk && !coarseOk) {
-            android.util.Log.w("SyncWorker", "Location permission not granted — skipping")
+            android.util.Log.w("SyncWorker", "Location permission not granted")
             return null
         }
 
+        // ── Try FusedLocation cached result first (instant) ──
         val fusedClient = LocationServices.getFusedLocationProviderClient(applicationContext)
-
-        // ── Step 1: try cached lastLocation (instant, no battery cost) ──
         val cached = withTimeoutOrNull(3_000L) {
             suspendCancellableCoroutine<Location?> { cont ->
                 fusedClient.lastLocation
                     .addOnSuccessListener { loc ->
-                        android.util.Log.d("SyncWorker", "Cached location: $loc")
+                        android.util.Log.d("SyncWorker", "FusedLocation cached: $loc")
                         if (cont.isActive) cont.resume(loc)
                     }
                     .addOnFailureListener {
@@ -206,78 +269,83 @@ class SyncWorker(
                     }
             }
         }
-        if (cached != null) return cached
-
-        // ── Step 2: request fresh location — try LOW_POWER (cell/WiFi) first ──
-        // LOW_POWER works indoors without GPS, much faster than HIGH_ACCURACY
-        android.util.Log.d("SyncWorker", "No cached location — requesting fresh (LOW_POWER)...")
-        val fresh = withTimeoutOrNull(20_000L) {
-            suspendCancellableCoroutine<Location?> { cont ->
-                val locationRequest = LocationRequest.Builder(
-                    Priority.PRIORITY_LOW_POWER, 1000L
-                ).setMaxUpdates(1)
-                    .setMinUpdateIntervalMillis(0L)
-                    .build()
-
-                val handlerThread = android.os.HandlerThread("loc-worker-${System.currentTimeMillis()}")
-                handlerThread.start()
-
-                val callback = object : LocationCallback() {
-                    override fun onLocationResult(result: LocationResult) {
-                        fusedClient.removeLocationUpdates(this)
-                        handlerThread.quitSafely()
-                        val loc = result.lastLocation
-                        android.util.Log.d("SyncWorker", "Fresh LOW_POWER location: $loc")
-                        if (cont.isActive) cont.resume(loc)
-                    }
-                }
-                try {
-                    fusedClient.requestLocationUpdates(locationRequest, callback, handlerThread.looper)
-                    cont.invokeOnCancellation {
-                        fusedClient.removeLocationUpdates(callback)
-                        handlerThread.quitSafely()
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("SyncWorker", "LOW_POWER request failed: ${e.message}")
-                    handlerThread.quitSafely()
-                    if (cont.isActive) cont.resume(null)
-                }
-            }
+        if (cached != null) {
+            android.util.Log.d("SyncWorker", "Using cached FusedLocation")
+            return cached
         }
-        if (fresh != null) return fresh
 
-        // ── Step 3: fallback — try BALANCED_POWER as last resort ──
-        android.util.Log.d("SyncWorker", "LOW_POWER timed out — trying BALANCED_POWER fallback...")
-        return withTimeoutOrNull(20_000L) {
-            suspendCancellableCoroutine<Location?> { cont ->
-                val locationRequest = LocationRequest.Builder(
-                    Priority.PRIORITY_BALANCED_POWER_ACCURACY, 1000L
-                ).setMaxUpdates(1)
-                    .setMinUpdateIntervalMillis(0L)
-                    .build()
+        // ── Vivo/FUNTOUCH fallback: use LocationManager directly ──
+        // FusedLocation is blocked by Vivo OS in background — LocationManager bypasses it
+        android.util.Log.d("SyncWorker", "FusedLocation unavailable — trying LocationManager directly...")
+        return withContext(Dispatchers.IO) {
+            withTimeoutOrNull(15_000L) {
+                suspendCancellableCoroutine<Location?> { cont ->
+                    val lm = applicationContext.getSystemService(Context.LOCATION_SERVICE)
+                            as android.location.LocationManager
 
-                val handlerThread = android.os.HandlerThread("loc-worker-bal-${System.currentTimeMillis()}")
-                handlerThread.start()
+                    // Try NETWORK provider first (cell towers + WiFi — works indoors)
+                    val networkEnabled = lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+                    val gpsEnabled     = lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
 
-                val callback = object : LocationCallback() {
-                    override fun onLocationResult(result: LocationResult) {
-                        fusedClient.removeLocationUpdates(this)
-                        handlerThread.quitSafely()
-                        val loc = result.lastLocation
-                        android.util.Log.d("SyncWorker", "BALANCED location: $loc")
-                        if (cont.isActive) cont.resume(loc)
+                    android.util.Log.d("SyncWorker", "NetworkProvider=$networkEnabled GPSProvider=$gpsEnabled")
+
+                    // Try getLastKnownLocation — totally synchronous, instant
+                    if (networkEnabled) {
+                        val last = lm.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                        if (last != null) {
+                            android.util.Log.d("SyncWorker", "LocationManager NETWORK last known: ${last.latitude}, ${last.longitude}")
+                            if (cont.isActive) cont.resume(last)
+                            return@suspendCancellableCoroutine
+                        }
                     }
-                }
-                try {
-                    fusedClient.requestLocationUpdates(locationRequest, callback, handlerThread.looper)
-                    cont.invokeOnCancellation {
-                        fusedClient.removeLocationUpdates(callback)
-                        handlerThread.quitSafely()
+                    if (gpsEnabled) {
+                        val last = lm.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                        if (last != null) {
+                            android.util.Log.d("SyncWorker", "LocationManager GPS last known: ${last.latitude}, ${last.longitude}")
+                            if (cont.isActive) cont.resume(last)
+                            return@suspendCancellableCoroutine
+                        }
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e("SyncWorker", "BALANCED request failed: ${e.message}")
-                    handlerThread.quitSafely()
-                    if (cont.isActive) cont.resume(null)
+
+                    // No last known — request a fresh one via NETWORK provider
+                    val handlerThread = android.os.HandlerThread("loc-lm-${System.currentTimeMillis()}")
+                    handlerThread.start()
+                    val handler = android.os.Handler(handlerThread.looper)
+
+                    val listener = object : android.location.LocationListener {
+                        override fun onLocationChanged(location: android.location.Location) {
+                            android.util.Log.d("SyncWorker", "LocationManager fresh: ${location.latitude}, ${location.longitude}")
+                            lm.removeUpdates(this)
+                            handlerThread.quitSafely()
+                            if (cont.isActive) cont.resume(location)
+                        }
+                        @Deprecated("Deprecated in Java")
+                        override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+                    }
+
+                    try {
+                        val provider = when {
+                            networkEnabled -> android.location.LocationManager.NETWORK_PROVIDER
+                            gpsEnabled     -> android.location.LocationManager.GPS_PROVIDER
+                            else           -> null
+                        }
+                        if (provider == null) {
+                            android.util.Log.w("SyncWorker", "No location provider available")
+                            handlerThread.quitSafely()
+                            if (cont.isActive) cont.resume(null)
+                            return@suspendCancellableCoroutine
+                        }
+                        android.util.Log.d("SyncWorker", "Requesting LocationManager update via $provider")
+                        lm.requestLocationUpdates(provider, 0L, 0f, listener, handlerThread.looper)
+                        cont.invokeOnCancellation {
+                            lm.removeUpdates(listener)
+                            handlerThread.quitSafely()
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("SyncWorker", "LocationManager request failed: ${e.message}")
+                        handlerThread.quitSafely()
+                        if (cont.isActive) cont.resume(null)
+                    }
                 }
             }
         }
