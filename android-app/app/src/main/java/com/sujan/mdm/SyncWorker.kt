@@ -72,8 +72,14 @@ class SyncWorker(
             }
 
             // ── Detect installs and uninstalls ────────────────────────────
+            // Load currently blocked packages so we don't log hide/unhide as install/uninstall
+            val blockedRaw = prefs.getString("blocked_packages", "") ?: ""
+            val blockedSet = if (blockedRaw.isEmpty()) emptySet()
+            else blockedRaw.split(",").toSet()
+
             val newlyInstalled   = currentPackages - savedPackages
-            val newlyUninstalled = savedPackages   - currentPackages
+            // Exclude blocked packages from uninstall detection — hidden apps are NOT uninstalled
+            val newlyUninstalled = (savedPackages - currentPackages) - blockedSet
 
             // ── Post activity log — SKIP on first run ─────────────────────
             if (!isFirstRun && adminId != -1L &&
