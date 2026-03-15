@@ -1001,9 +1001,11 @@
         const data = JSON.stringify({
             "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.sujan.mdm/.MyDeviceAdminReceiver",
             "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": document.getElementById('qrApkUrl').value,
+            "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "43333e8991393a22a5277ed569d7713ba2ff5c60e646e0e25cd2b4ba00bb3f64",
             "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
             "android.app.extra.PROVISIONING_WIFI_SSID": document.getElementById('qrWifi').value,
             "android.app.extra.PROVISIONING_WIFI_PASSWORD": document.getElementById('qrWifiPass').value,
+            "android.app.extra.PROVISIONING_WIFI_SECURITY_TYPE": "WPA",
             "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {"enrollment_token": document.getElementById('qrToken').value}
         }, null, 2);
         document.getElementById('qrPlaceholder').style.display = 'none';
