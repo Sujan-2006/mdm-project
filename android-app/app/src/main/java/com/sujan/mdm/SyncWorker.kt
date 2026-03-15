@@ -66,11 +66,19 @@ class SyncWorker(
             else savedPackagesRaw.split(",").toSet()
 
             val savedNameMapRaw = prefs.getString("saved_app_name_map", "") ?: ""
+            // Map stores: packageName -> "appName|isSystemApp"
             val savedNameMap    = mutableMapOf<String, String>()
+            val savedSystemMap  = mutableMapOf<String, Boolean>()
             if (savedNameMapRaw.isNotEmpty()) {
                 savedNameMapRaw.split("||").forEach { entry ->
                     val idx = entry.indexOf('=')
-                    if (idx > 0) savedNameMap[entry.substring(0, idx)] = entry.substring(idx + 1)
+                    if (idx > 0) {
+                        val pkg   = entry.substring(0, idx)
+                        val value = entry.substring(idx + 1)
+                        val parts = value.split("|")
+                        savedNameMap[pkg]   = parts[0]
+                        savedSystemMap[pkg] = parts.getOrNull(1) == "true"
+                    }
                 }
             }
 
@@ -134,7 +142,7 @@ class SyncWorker(
             }
 
             // ── Save current package list and name map ────────────────────
-            val newNameMap = apps.joinToString("||") { "${it.packageName}=${it.appName}" }
+            val newNameMap = apps.joinToString("||") { "${it.packageName}=${it.appName}|${it.isSystemApp}" }
             prefs.edit()
                 .putString("saved_package_list", currentPackages.joinToString(","))
                 .putString("saved_app_name_map", newNameMap)
@@ -188,14 +196,15 @@ class SyncWorker(
             val hiddenApps = blockedPackages
                 .filter { pkg -> apps.none { it.packageName == pkg } }
                 .mapNotNull { pkg ->
-                    val name = savedNameMap[pkg] ?: pkg
+                    val name     = savedNameMap[pkg] ?: pkg
+                    val isSysApp = savedSystemMap[pkg] ?: false
                     AppItem(
                         deviceId      = deviceId,
                         appName       = name,
                         packageName   = pkg,
                         versionName   = "N/A",
                         versionCode   = 0,
-                        isSystemApp   = false,
+                        isSystemApp   = isSysApp,
                         installSource = "Unknown"
                     )
                 }
