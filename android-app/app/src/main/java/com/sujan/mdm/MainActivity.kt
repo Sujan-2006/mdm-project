@@ -393,13 +393,16 @@ class MainActivity : AppCompatActivity() {
             .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
             .build()
 
-        // 1. Immediate one-time sync every time the app is opened
+        // 1. Immediate one-time sync — cancel any existing immediate sync first
+        //    to prevent two syncs running at the same time (causes DB conflict)
+        wm.cancelUniqueWork("mdm_sync_now")
         val immediateSync = androidx.work.OneTimeWorkRequestBuilder<SyncWorker>()
             .setConstraints(constraints)
+            .setInitialDelay(2, java.util.concurrent.TimeUnit.SECONDS) // small delay so cancel takes effect
             .build()
         wm.enqueueUniqueWork(
             "mdm_sync_now",
-            androidx.work.ExistingWorkPolicy.REPLACE,
+            androidx.work.ExistingWorkPolicy.KEEP,
             immediateSync
         )
 

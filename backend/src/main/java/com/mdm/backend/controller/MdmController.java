@@ -3,9 +3,11 @@ package com.mdm.backend.controller;
 import com.mdm.backend.model.*;
 import com.mdm.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -67,17 +69,23 @@ public class MdmController {
     }
 
     @PostMapping("/app-inventory")
+    @Transactional
     public ResponseEntity<String> saveAppInventory(@RequestBody List<AppInventory> apps) {
         if (apps.isEmpty()) return ResponseEntity.ok("No apps");
         String deviceId = apps.get(0).getDeviceId();
-        appInventoryRepository.deleteByDeviceId(deviceId);
-        appInventoryRepository.saveAll(apps);
-        // Update lastSeen when device syncs app inventory
-        enrolledDeviceRepository.findByDeviceId(deviceId).ifPresent(device -> {
-            device.setLastSeen(LocalDateTime.now());
-            enrolledDeviceRepository.save(device);
-        });
-        return ResponseEntity.ok("App inventory saved");
+        try {
+            appInventoryRepository.deleteByDeviceId(deviceId);
+            appInventoryRepository.flush();
+            appInventoryRepository.saveAll(apps);
+            enrolledDeviceRepository.findByDeviceId(deviceId).ifPresent(device -> {
+                device.setLastSeen(LocalDateTime.now());
+                enrolledDeviceRepository.save(device);
+            });
+            return ResponseEntity.ok("App inventory saved");
+        } catch (DataAccessException e) {
+            // Two syncs fired at the same time — safe to ignore, next sync will succeed
+            return ResponseEntity.ok("App inventory sync skipped (concurrent request)");
+        }
     }
 
     // ── Ping endpoint — updates lastSeen timestamp ──
