@@ -224,20 +224,15 @@ class SyncWorker(
             }
         }
 
-        // Unhide any previously blocked apps that are no longer blocked
-        val savedBlocked = applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
-            .getString("blocked_packages", "") ?: ""
-        val previouslyBlocked = if (savedBlocked.isEmpty()) emptySet()
-        else savedBlocked.split(",").toSet()
-        val nowUnblocked = previouslyBlocked - blockedPackages.toSet()
-
-        for (pkg in nowUnblocked) {
-            if (installedPackages.contains(pkg)) {
+        // Unhide ALL installed apps that are NOT in the current blocked list
+        // This handles reinstall/prefs-cleared scenarios correctly
+        for (pkg in installedPackages) {
+            if (pkg == applicationContext.packageName) continue
+            if (!blockedPackages.contains(pkg)) {
                 try {
                     dpm.setApplicationHidden(adminComponent, pkg, false)
-                    android.util.Log.d("SyncWorker", "Unhidden: $pkg")
                 } catch (e: Exception) {
-                    android.util.Log.e("SyncWorker", "Failed to unhide $pkg: ${e.message}")
+                    // Some system packages can't be unhidden — ignore
                 }
             }
         }
