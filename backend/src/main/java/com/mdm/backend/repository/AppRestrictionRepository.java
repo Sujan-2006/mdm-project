@@ -11,5 +11,6 @@ public interface AppRestrictionRepository extends JpaRepository<AppRestriction, 
     List<AppRestriction> findByAdminId(Long adminId);
     Optional<AppRestriction> findByAdminIdAndPackageName(Long adminId, String packageName);
     boolean existsByAdminIdAndPackageName(Long adminId, String packageName);
+    @org.springframework.transaction.annotation.Transactional
     void deleteByAdminIdAndPackageName(Long adminId, String packageName);
 }
