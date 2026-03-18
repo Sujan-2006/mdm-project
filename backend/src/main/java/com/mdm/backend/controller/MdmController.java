@@ -69,7 +69,7 @@ public class MdmController {
     }
 
     @PostMapping("/app-inventory")
-    @Transactional
+    @Transactional(noRollbackFor = DataAccessException.class)
     public ResponseEntity<String> saveAppInventory(@RequestBody List<AppInventory> apps) {
         if (apps.isEmpty()) return ResponseEntity.ok("No apps");
         String deviceId = apps.get(0).getDeviceId();
