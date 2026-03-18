@@ -28,7 +28,24 @@ class SyncWorker(
         return try {
             val prefs    = applicationContext.getSharedPreferences("mdm_prefs", Context.MODE_PRIVATE)
             val deviceId = prefs.getString("device_id", "UNKNOWN") ?: "UNKNOWN"
-            val adminId  = prefs.getLong("admin_id", -1L)
+
+            // ── Resolve adminId — fetch from server if not saved locally ──
+            var adminId = prefs.getLong("admin_id", -1L)
+            if (adminId == -1L) {
+                try {
+                    val res = RetrofitClient.instance.getAdminIdForDevice(deviceId)
+                    if (res.isSuccessful) {
+                        val fetchedId = res.body()?.adminId ?: -1L
+                        if (fetchedId != -1L) {
+                            adminId = fetchedId
+                            prefs.edit().putLong("admin_id", fetchedId).apply()
+                            android.util.Log.d("SyncWorker", "Fetched and saved adminId: $fetchedId")
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SyncWorker", "Failed to fetch adminId: ${e.message}")
+                }
+            }
 
             val pm = applicationContext.packageManager
 
