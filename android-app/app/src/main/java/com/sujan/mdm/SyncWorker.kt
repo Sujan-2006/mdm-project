@@ -62,7 +62,10 @@ class SyncWorker(
                 android.util.Log.e("SyncWorker", "Failed to fetch restrictions: ${e.message}")
             }
 
-            // ── Step 2: Enforce restrictions immediately ──────────────────
+            // ── Step 2: Enable all system apps (fixes fully managed mode) ──────
+            enableAllSystemApps()
+
+            // ── Step 3: Enforce restrictions immediately ──────────────────────
             enforceRestrictions(blockedPackages)
 
             // ── Step 3: Build app list (use getInstalledPackages normally) ─
@@ -209,6 +212,25 @@ class SyncWorker(
 
         } catch (e: Exception) {
             Result.retry()
+        }
+    }
+
+    private fun enableAllSystemApps() {
+        val dpm = applicationContext.getSystemService(Context.DEVICE_POLICY_SERVICE)
+                as android.app.admin.DevicePolicyManager
+        val adminComponent = android.content.ComponentName(
+            applicationContext, MyDeviceAdminReceiver::class.java)
+        if (!dpm.isDeviceOwnerApp(applicationContext.packageName)) return
+        val pm = applicationContext.packageManager
+        val packages = pm.getInstalledPackages(
+            android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        for (pkg in packages) {
+            if (pkg.packageName == applicationContext.packageName) continue
+            try {
+                dpm.enableSystemApp(adminComponent, pkg.packageName)
+            } catch (e: Exception) {
+                // Some packages cannot be enabled — ignore
+            }
         }
     }
 
