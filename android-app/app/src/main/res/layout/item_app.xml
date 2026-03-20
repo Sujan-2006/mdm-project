@@ -6,9 +6,9 @@
     android:layout_height="wrap_content"
     android:layout_marginStart="12dp"
     android:layout_marginEnd="12dp"
-    android:layout_marginTop="6dp"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="2dp"
+    android:layout_marginTop="5dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
     app:cardBackgroundColor="#FFFFFF">
 
     <LinearLayout
@@ -21,9 +21,9 @@
         <!-- App Icon -->
         <ImageView
             android:id="@+id/ivAppIcon"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginEnd="14dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginEnd="12dp"
             android:scaleType="fitCenter"
             android:contentDescription="App icon"/>
 
@@ -49,7 +49,7 @@
                     android:layout_weight="1"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#1A237E"
+                    android:textColor="#0D1B3E"
                     android:maxLines="1"
                     android:ellipsize="end"/>
 
@@ -62,8 +62,8 @@
                     android:fontFamily="monospace"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"
                     android:layout_marginStart="8dp"/>
 
             </LinearLayout>
@@ -74,7 +74,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="10sp"
-                android:textColor="#1565C0"
+                android:textColor="#185FA5"
                 android:fontFamily="monospace"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -91,13 +91,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="10sp"
-                    android:textColor="#757575"
+                    android:textColor="#94A3B8"
                     android:fontFamily="monospace"/>
 
                 <TextView
                     android:text=" · "
                     android:textSize="10sp"
-                    android:textColor="#BDBDBD"
+                    android:textColor="#CBD5E1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
@@ -107,7 +107,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textSize="10sp"
-                    android:textColor="#757575"
+                    android:textColor="#94A3B8"
                     android:fontFamily="monospace"
                     android:maxLines="1"
                     android:ellipsize="end"/>

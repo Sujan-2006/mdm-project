@@ -4,18 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F4F8">
+    android:background="#F7F8FA">
 
     <!-- TOP BAR -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#1A237E"
+        android:background="#0D1B3E"
         android:paddingStart="8dp"
         android:paddingEnd="16dp"
-        android:gravity="center_vertical"
-        android:elevation="4dp">
+        android:paddingTop="48dp"
+        android:paddingBottom="14dp"
+        android:gravity="center_vertical">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -34,7 +35,7 @@
             android:layout_marginStart="8dp">
 
             <TextView
-                android:text="📦 App Inventory"
+                android:text="App Inventory"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -45,7 +46,7 @@
                 android:id="@+id/tvResultCount"
                 android:text="Loading..."
                 android:textSize="11sp"
-                android:textColor="#90CAF9"
+                android:textColor="#6B7FA8"
                 android:fontFamily="monospace"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
@@ -67,182 +68,177 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="#FFFFFF"
-        android:padding="12dp"
-        android:elevation="2dp">
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <!-- Total -->
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="68dp"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="#E8EAF6"
-            android:padding="12dp"
+            android:background="@drawable/stat_card_blue"
+            android:padding="10dp"
             android:layout_marginEnd="6dp"
             android:gravity="center">
 
             <TextView
                 android:id="@+id/tvTotalCount"
                 android:text="—"
-                android:textSize="26sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#1A237E"
+                android:textColor="#0C447C"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:text="TOTAL"
-                android:textSize="9sp"
-                android:textColor="#757575"
-                android:fontFamily="monospace"
+                android:text="Total"
+                android:textSize="10sp"
+                android:textColor="#378ADD"
+                android:letterSpacing="0.04"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"/>
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
         <!-- System -->
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="68dp"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="#E8F5E9"
-            android:padding="12dp"
+            android:background="@drawable/stat_card_green"
+            android:padding="10dp"
             android:layout_marginEnd="6dp"
             android:gravity="center">
 
             <TextView
                 android:id="@+id/tvSystemCount"
                 android:text="—"
-                android:textSize="26sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#2E7D32"
+                android:textColor="#27500A"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:text="SYSTEM"
-                android:textSize="9sp"
-                android:textColor="#757575"
-                android:fontFamily="monospace"
+                android:text="System"
+                android:textSize="10sp"
+                android:textColor="#639922"
+                android:letterSpacing="0.04"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"/>
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
         <!-- User -->
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="68dp"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="#F3E5F5"
-            android:padding="12dp"
+            android:background="@drawable/stat_card_purple"
+            android:padding="10dp"
             android:gravity="center">
 
             <TextView
                 android:id="@+id/tvUserCount"
                 android:text="—"
-                android:textSize="26sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#6A1B9A"
+                android:textColor="#3C3489"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:text="USER"
-                android:textSize="9sp"
-                android:textColor="#757575"
-                android:fontFamily="monospace"
+                android:text="User"
+                android:textSize="10sp"
+                android:textColor="#7F77DD"
+                android:letterSpacing="0.04"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"/>
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- SEARCH BAR -->
+    <!-- SEARCH + FILTER -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:background="#FFFFFF"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:paddingBottom="10dp"
-        android:paddingTop="10dp"
-        android:gravity="center_vertical">
+        android:paddingBottom="12dp"
+        android:paddingTop="4dp">
 
+        <!-- Search -->
         <EditText
             android:id="@+id/etSearch"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="44dp"
-            android:layout_weight="1"
-            android:hint="🔍  Search app name or package..."
+            android:hint="Search app name or package..."
             android:textSize="13sp"
-            android:textColor="#212121"
-            android:textColorHint="#9E9E9E"
+            android:textColor="#0D1B3E"
+            android:textColorHint="#94A3B8"
             android:background="@drawable/input_background"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:fontFamily="monospace"
             android:inputType="text"
             android:imeOptions="actionSearch"
-            android:singleLine="true"/>
+            android:singleLine="true"
+            android:layout_marginBottom="10dp"/>
 
-    </LinearLayout>
+        <!-- Filter Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <!-- FILTER BUTTONS -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#FFFFFF"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="12dp"
-        android:gravity="center_vertical">
+            <Button
+                android:id="@+id/btnAll"
+                android:text="All"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:backgroundTint="#0D1B3E"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"/>
 
-        <Button
-            android:id="@+id/btnAll"
-            android:text="All"
-            android:layout_width="0dp"
-            android:layout_height="36dp"
-            android:layout_weight="1"
-            android:textSize="12sp"
-            android:backgroundTint="#1565C0"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="6dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"/>
+            <Button
+                android:id="@+id/btnUser"
+                android:text="User"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:textSize="12sp"
+                android:backgroundTint="#EEEDFE"
+                android:textColor="#534AB7"
+                android:layout_marginEnd="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"/>
 
-        <Button
-            android:id="@+id/btnUser"
-            android:text="User"
-            android:layout_width="0dp"
-            android:layout_height="36dp"
-            android:layout_weight="1"
-            android:textSize="12sp"
-            android:backgroundTint="#E8EAF6"
-            android:textColor="#757575"
-            android:layout_marginEnd="6dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"/>
+            <Button
+                android:id="@+id/btnSystem"
+                android:text="System"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:textSize="12sp"
+                android:backgroundTint="#EAF3DE"
+                android:textColor="#3B6D11"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"/>
 
-        <Button
-            android:id="@+id/btnSystem"
-            android:text="System"
-            android:layout_width="0dp"
-            android:layout_height="36dp"
-            android:layout_weight="1"
-            android:textSize="12sp"
-            android:backgroundTint="#E8EAF6"
-            android:textColor="#757575"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"/>
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -250,14 +246,14 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#E0E0E0"/>
+        android:background="#E2E8F0"/>
 
     <!-- LOADING TEXT -->
     <TextView
         android:id="@+id/tvLoading"
-        android:text="⟳ Loading apps..."
+        android:text="Loading apps..."
         android:textSize="13sp"
-        android:textColor="#9E9E9E"
+        android:textColor="#94A3B8"
         android:fontFamily="monospace"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -271,7 +267,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#F0F4F8"
+        android:background="#F7F8FA"
         android:clipToPadding="false"
         android:paddingBottom="8dp"/>
 

@@ -1,327 +1,500 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F4F8">
+    android:background="#F7F8FA">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <!-- Header Card -->
-        <androidx.cardview.widget.CardView
+        <!-- ═══ HEADER ═══ -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
+            android:orientation="vertical"
+            android:background="#0D1B3E"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="48dp"
+            android:paddingBottom="28dp">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="#1A237E"
-                android:orientation="vertical"
-                android:padding="20dp">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
 
                 <TextView
-                    android:text="🛡 MDM Device Manager"
+                    android:text="🛡"
+                    android:textSize="22sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:text="DroidShield"
                     android:textSize="22sp"
                     android:textStyle="bold"
                     android:textColor="#FFFFFF"
+                    android:letterSpacing="0.02"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
-                <TextView
-                    android:text="Android Enterprise Solution"
-                    android:textSize="13sp"
-                    android:textColor="#90CAF9"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:text="Android Enterprise MDM"
+                android:textSize="12sp"
+                android:textColor="#6B7FA8"
+                android:letterSpacing="0.06"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- Status Pill -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:orientation="horizontal"
+                android:background="@drawable/status_pill_bg"
+                android:paddingStart="12dp"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical">
+
+                <View
+                    android:id="@+id/statusDot"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/dot_orange"
+                    android:layout_marginEnd="8dp"/>
 
                 <TextView
                     android:id="@+id/tvStatus"
-                    android:text="⚪ Status: Not Enrolled"
-                    android:textSize="14sp"
-                    android:textColor="#FFB74D"
-                    android:textStyle="bold"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Enrollment Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="#FFFFFF">
-
-                <TextView
-                    android:text="Device Enrollment"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A237E"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"/>
-
-                <TextView
-                    android:text="Enrollment Token"
-                    android:textSize="12sp"
-                    android:textColor="#757575"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"/>
-
-                <EditText
-                    android:id="@+id/etEnrollmentToken"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Enter enrollment token here"
-                    android:textSize="14sp"
-                    android:padding="12dp"
-                    android:background="@drawable/input_background"
-                    android:layout_marginBottom="12dp"/>
-
-                <Button
-                    android:id="@+id/btnEnroll"
-                    android:text="🔐 Enroll Device"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#1565C0"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginBottom="8dp"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Device Info Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="#FFFFFF">
-
-                <TextView
-                    android:text="Device Information"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A237E"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"/>
-
-                <Button
-                    android:id="@+id/btnCollectInfo"
-                    android:text="📱 Collect Device Info"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#2E7D32"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginBottom="12dp"/>
-
-                <TextView
-                    android:id="@+id/tvDeviceInfo"
-                    android:text="Press button to collect device information..."
+                    android:text="Not Enrolled"
                     android:textSize="13sp"
-                    android:textColor="#424242"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    android:background="#F5F5F5"
-                    android:lineSpacingExtra="4dp"/>
+                    android:textColor="#E2E8F0"
+                    android:textStyle="bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <!-- App Inventory Card -->
-        <androidx.cardview.widget.CardView
+        </LinearLayout>
+
+        <!-- ═══ CONTENT AREA ═══ -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <LinearLayout
+            <!-- ── ENROLLMENT CARD ── -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="#FFFFFF">
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#FFFFFF">
 
-                <TextView
-                    android:text="App Inventory"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A237E"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"/>
-
-                <!-- Sync + View buttons side by side -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <!-- Card Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <LinearLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/icon_bg_blue"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp">
+
+                            <TextView
+                                android:text="🔐"
+                                android:textSize="16sp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:text="Device Enrollment"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="#0D1B3E"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:text="Enter your token to register"
+                                android:textSize="12sp"
+                                android:textColor="#94A3B8"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Token Input -->
+                    <TextView
+                        android:text="ENROLLMENT TOKEN"
+                        android:textSize="10sp"
+                        android:textColor="#94A3B8"
+                        android:letterSpacing="0.12"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="monospace"/>
+
+                    <EditText
+                        android:id="@+id/etEnrollmentToken"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:hint="e.g. MDM_TOKEN_2024"
+                        android:textSize="14sp"
+                        android:textColor="#0D1B3E"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:background="@drawable/input_background"
+                        android:layout_marginBottom="14dp"
+                        android:fontFamily="monospace"/>
 
                     <Button
-                        android:id="@+id/btnSyncApps"
-                        android:text="📦 Sync"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:backgroundTint="#6A1B9A"
+                        android:id="@+id/btnEnroll"
+                        android:text="Enroll Device"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:backgroundTint="#0D1B3E"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
-                        android:layout_marginEnd="8dp"/>
-
-                    <Button
-                        android:id="@+id/btnViewInventory"
-                        android:text="📋 View All Apps"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:backgroundTint="#0277BD"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp"/>
+                        android:textStyle="bold"
+                        android:letterSpacing="0.04"
+                        style="@style/Widget.Material3.Button"/>
 
                 </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                <!-- App Stats Row -->
+            <!-- ── DEVICE INFO CARD ── -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#FFFFFF">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
+                    <!-- Card Header -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:background="#E8EAF6"
-                        android:padding="12dp"
-                        android:layout_marginEnd="4dp"
-                        android:gravity="center">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
 
-                        <TextView
-                            android:id="@+id/tvTotalApps"
-                            android:text="0"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:textColor="#1A237E"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                        <LinearLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/icon_bg_green"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp">
 
-                        <TextView
-                            android:text="Total"
-                            android:textSize="11sp"
-                            android:textColor="#757575"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                            <TextView
+                                android:text="📱"
+                                android:textSize="16sp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:text="Device Information"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="#0D1B3E"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:text="Hardware and OS details"
+                                android:textSize="12sp"
+                                android:textColor="#94A3B8"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
 
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="0dp"
+                    <Button
+                        android:id="@+id/btnCollectInfo"
+                        android:text="Collect Device Info"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:backgroundTint="#0F6E56"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="14dp"
+                        style="@style/Widget.Material3.Button"/>
+
+                    <TextView
+                        android:id="@+id/tvDeviceInfo"
+                        android:text="Tap the button above to collect device information..."
+                        android:textSize="13sp"
+                        android:textColor="#64748B"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:background="#E8F5E9"
-                        android:padding="12dp"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:gravity="center">
-
-                        <TextView
-                            android:id="@+id/tvSystemApps"
-                            android:text="0"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:textColor="#2E7D32"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-
-                        <TextView
-                            android:text="System"
-                            android:textSize="11sp"
-                            android:textColor="#757575"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:background="#F3E5F5"
-                        android:padding="12dp"
-                        android:layout_marginStart="4dp"
-                        android:gravity="center">
-
-                        <TextView
-                            android:id="@+id/tvUserApps"
-                            android:text="0"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:textColor="#6A1B9A"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-
-                        <TextView
-                            android:text="User"
-                            android:textSize="11sp"
-                            android:textColor="#757575"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-
-                    </LinearLayout>
+                        android:padding="14dp"
+                        android:background="@drawable/info_box_bg"
+                        android:lineSpacingExtra="4dp"
+                        android:fontFamily="monospace"/>
 
                 </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                <TextView
-                    android:id="@+id/tvSyncStatus"
-                    android:text="No sync performed yet..."
-                    android:textSize="13sp"
-                    android:textColor="#424242"
+            <!-- ── APP INVENTORY CARD ── -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    android:background="#F5F5F5"/>
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                    <!-- Card Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
 
+                        <LinearLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/icon_bg_purple"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp">
+
+                            <TextView
+                                android:text="📦"
+                                android:textSize="16sp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:text="App Inventory"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="#0D1B3E"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:text="Sync and browse installed apps"
+                                android:textSize="12sp"
+                                android:textColor="#94A3B8"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Action Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <Button
+                            android:id="@+id/btnSyncApps"
+                            android:text="Sync"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="#534AB7"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="8dp"
+                            style="@style/Widget.Material3.Button"/>
+
+                        <Button
+                            android:id="@+id/btnViewInventory"
+                            android:text="View All Apps"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="#185FA5"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            style="@style/Widget.Material3.Button"/>
+
+                    </LinearLayout>
+
+                    <!-- Stats Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="14dp">
+
+                        <!-- Total -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="72dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:background="@drawable/stat_card_blue"
+                            android:padding="12dp"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center">
+
+                            <TextView
+                                android:id="@+id/tvTotalApps"
+                                android:text="0"
+                                android:textSize="26sp"
+                                android:textStyle="bold"
+                                android:textColor="#0C447C"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:text="Total"
+                                android:textSize="11sp"
+                                android:textColor="#378ADD"
+                                android:letterSpacing="0.04"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                        <!-- System -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="72dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:background="@drawable/stat_card_green"
+                            android:padding="12dp"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center">
+
+                            <TextView
+                                android:id="@+id/tvSystemApps"
+                                android:text="0"
+                                android:textSize="26sp"
+                                android:textStyle="bold"
+                                android:textColor="#27500A"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:text="System"
+                                android:textSize="11sp"
+                                android:textColor="#639922"
+                                android:letterSpacing="0.04"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                        <!-- User -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="72dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:background="@drawable/stat_card_purple"
+                            android:padding="12dp"
+                            android:gravity="center">
+
+                            <TextView
+                                android:id="@+id/tvUserApps"
+                                android:text="0"
+                                android:textSize="26sp"
+                                android:textStyle="bold"
+                                android:textColor="#3C3489"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:text="User"
+                                android:textSize="11sp"
+                                android:textColor="#7F77DD"
+                                android:letterSpacing="0.04"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Sync Status -->
+                    <TextView
+                        android:id="@+id/tvSyncStatus"
+                        android:text="No sync performed yet"
+                        android:textSize="13sp"
+                        android:textColor="#64748B"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="14dp"
+                        android:background="@drawable/info_box_bg"
+                        android:lineSpacingExtra="4dp"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

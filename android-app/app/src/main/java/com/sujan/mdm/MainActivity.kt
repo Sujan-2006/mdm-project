@@ -11,6 +11,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -36,13 +37,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSyncApps: Button
     private lateinit var btnViewInventory: Button
     private lateinit var etEnrollmentToken: EditText
+    private lateinit var statusDot: View
 
     private lateinit var devicePolicyManager: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
 
     companion object {
-        private const val LOCATION_PERMISSION_REQUEST    = 1001
-        private const val BACKGROUND_LOCATION_REQUEST    = 1002
+        private const val LOCATION_PERMISSION_REQUEST = 1001
+        private const val BACKGROUND_LOCATION_REQUEST = 1002
     }
 
     private val deviceId: String by lazy {
@@ -76,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         btnSyncApps       = findViewById(R.id.btnSyncApps)
         btnViewInventory  = findViewById(R.id.btnViewInventory)
         etEnrollmentToken = findViewById(R.id.etEnrollmentToken)
+        statusDot         = findViewById(R.id.statusDot)
 
         checkEnrollmentStatus()
         checkDeviceOwnerStatus()
@@ -96,7 +99,7 @@ class MainActivity : AppCompatActivity() {
         btnEnroll.setOnClickListener {
             val p = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
             if (p.getBoolean("is_enrolled", false)) {
-                tvSyncStatus.text = "✅ Device already enrolled!"; return@setOnClickListener
+                tvSyncStatus.text = "Device already enrolled!"; return@setOnClickListener
             }
             val token = etEnrollmentToken.text.toString().trim()
             if (token.isEmpty()) {
@@ -108,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         btnCollectInfo.setOnClickListener {
             val p = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
             if (p.getBoolean("info_collected", false)) {
-                tvSyncStatus.text = "✅ Device info already sent!"; return@setOnClickListener
+                tvSyncStatus.text = "Device info already sent!"; return@setOnClickListener
             }
             collectDeviceInfo()
         }
@@ -121,6 +124,32 @@ class MainActivity : AppCompatActivity() {
 
         handleProvisioningIntent()
         scheduleBackgroundSync()
+    }
+
+    // ── Status helpers ────────────────────────────────────────────────────
+    private fun setStatusEnrolled() {
+        tvStatus.text = "Enrolled"
+        statusDot.setBackgroundResource(R.drawable.dot_green)
+    }
+
+    private fun setStatusDeviceOwner() {
+        tvStatus.text = "Device Owner Active"
+        statusDot.setBackgroundResource(R.drawable.dot_green)
+    }
+
+    private fun setStatusNotEnrolled() {
+        tvStatus.text = "Not Enrolled"
+        statusDot.setBackgroundResource(R.drawable.dot_orange)
+    }
+
+    private fun setStatusEnrolling() {
+        tvStatus.text = "Enrolling..."
+        statusDot.setBackgroundResource(R.drawable.dot_orange)
+    }
+
+    private fun setStatusError() {
+        tvStatus.text = "Enrollment Failed"
+        statusDot.setBackgroundResource(R.drawable.dot_orange)
     }
 
     // ── Request Location Permission ───────────────────────────────────────
@@ -145,7 +174,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestBackgroundLocationIfNeeded() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val bgGranted = ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
             if (!bgGranted) {
@@ -167,13 +196,13 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    tvSyncStatus.text = "📍 Location permission granted!"
+                    tvSyncStatus.text = "Location permission granted"
                     requestBackgroundLocationIfNeeded()
                 }
             }
             BACKGROUND_LOCATION_REQUEST -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    tvSyncStatus.text = "📍 Background location granted! Location tracking active."
+                    tvSyncStatus.text = "Background location granted — tracking active"
                 }
             }
         }
@@ -197,7 +226,7 @@ class MainActivity : AppCompatActivity() {
             tvSystemApps.text = system.toString()
             tvUserApps.text   = user.toString()
             if (total > 0) {
-                tvSyncStatus.text = "✅ App inventory synced!\n\n📦 Total  : $total\n⚙️ System : $system\n👤 User   : $user"
+                tvSyncStatus.text = "App inventory synced!\n\nTotal  : $total\nSystem : $system\nUser   : $user"
                 getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()
                     .putInt("last_total_apps",  total)
                     .putInt("last_system_apps", system)
@@ -221,7 +250,7 @@ class MainActivity : AppCompatActivity() {
             tvTotalApps.text  = savedTotal.toString()
             tvSystemApps.text = savedSystem.toString()
             tvUserApps.text   = savedUser.toString()
-            tvSyncStatus.text = "✅ App inventory synced!\n\n📦 Total  : $savedTotal\n⚙️ System : $savedSystem\n👤 User   : $savedUser"
+            tvSyncStatus.text = "App inventory synced!\n\nTotal  : $savedTotal\nSystem : $savedSystem\nUser   : $savedUser"
         }
     }
 
@@ -230,8 +259,7 @@ class MainActivity : AppCompatActivity() {
         val isEnrolled      = prefs.getBoolean("is_enrolled",    false)
         val isInfoCollected = prefs.getBoolean("info_collected", false)
         if (isEnrolled) {
-            tvStatus.text = "🟢 Status: Enrolled ✅"
-            tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
+            setStatusEnrolled()
             btnEnroll.isEnabled         = false
             btnEnroll.alpha             = 0.5f
             etEnrollmentToken.isEnabled = false
@@ -240,7 +268,7 @@ class MainActivity : AppCompatActivity() {
         if (isInfoCollected) {
             btnCollectInfo.isEnabled = false
             btnCollectInfo.alpha     = 0.5f
-            tvDeviceInfo.text        = "✅ Device Info Already Collected!"
+            tvDeviceInfo.text        = "Device Info Already Collected!"
         }
     }
 
@@ -249,10 +277,9 @@ class MainActivity : AppCompatActivity() {
         val isEnrolled    = getSharedPreferences("mdm_prefs", MODE_PRIVATE)
             .getBoolean("is_enrolled", false)
         if (isDeviceOwner) {
-            tvStatus.text = "🟢 Status: Device Owner Active"
-            tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
+            setStatusDeviceOwner()
         } else if (!isEnrolled) {
-            tvStatus.text = "⚪ Status: Not Enrolled"
+            setStatusNotEnrolled()
         }
     }
 
@@ -272,20 +299,19 @@ class MainActivity : AppCompatActivity() {
     private fun enrollDevice(token: String) {
         lifecycleScope.launch {
             try {
-                tvStatus.text     = "🔄 Status: Enrolling..."
+                setStatusEnrolling()
                 tvSyncStatus.text = "Connecting to server..."
                 val response = RetrofitClient.instance.enroll(EnrollRequest(deviceId, token))
                 if (response.isSuccessful) {
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE).edit()
                         .putBoolean("is_enrolled", true).apply()
                     fetchAndSaveAdminId()
-                    tvStatus.text = "🟢 Status: Enrolled ✅"
-                    tvStatus.setTextColor(getColor(android.R.color.holo_green_light))
+                    setStatusEnrolled()
                     btnEnroll.isEnabled         = false
                     btnEnroll.alpha             = 0.5f
                     etEnrollmentToken.isEnabled = false
                     etEnrollmentToken.hint      = "Already enrolled"
-                    tvSyncStatus.text = "✅ Device enrolled successfully!\n\nDevice ID : $deviceId\nToken Used: $token\nServer    : Connected ✅"
+                    tvSyncStatus.text = "Device enrolled successfully!\n\nDevice ID : $deviceId\nToken     : $token\nServer    : Connected"
                 } else {
                     val errorMsg = response.errorBody()?.string() ?: "Unknown error"
                     if (errorMsg.contains("already enrolled")) {
@@ -293,15 +319,15 @@ class MainActivity : AppCompatActivity() {
                             .edit().putBoolean("is_enrolled", true).apply()
                         fetchAndSaveAdminId()
                         checkEnrollmentStatus()
-                        tvSyncStatus.text = "✅ Device already enrolled!"
+                        tvSyncStatus.text = "Device already enrolled!"
                     } else {
-                        tvStatus.text     = "🔴 Status: Enrollment Failed"
-                        tvSyncStatus.text = "❌ $errorMsg"
+                        setStatusError()
+                        tvSyncStatus.text = "Error: $errorMsg"
                     }
                 }
             } catch (e: Exception) {
-                tvStatus.text     = "🔴 Status: Connection Error"
-                tvSyncStatus.text = "❌ Error: ${e.message}\n\nCheck internet connection!"
+                setStatusError()
+                tvSyncStatus.text = "Connection error: ${e.message}\n\nCheck internet connection"
             }
         }
     }
@@ -319,19 +345,19 @@ class MainActivity : AppCompatActivity() {
                     uuid         = "RESTRICTED",
                     serial       = "RESTRICTED"
                 )
-                tvDeviceInfo.text = "📱 Device ID    : $deviceId\n📌 Model        : ${deviceInfo.model}\n🏭 Manufacturer : ${deviceInfo.manufacturer}\n🤖 Android      : ${deviceInfo.osVersion}\n🔧 SDK          : ${deviceInfo.sdkVersion}"
+                tvDeviceInfo.text = "Device ID    : $deviceId\nModel        : ${deviceInfo.model}\nManufacturer : ${deviceInfo.manufacturer}\nAndroid      : ${deviceInfo.osVersion}\nSDK          : ${deviceInfo.sdkVersion}"
                 val response = RetrofitClient.instance.sendDeviceInfo(deviceInfo)
                 if (response.isSuccessful) {
                     getSharedPreferences("mdm_prefs", MODE_PRIVATE)
                         .edit().putBoolean("info_collected", true).apply()
                     btnCollectInfo.isEnabled = false
                     btnCollectInfo.alpha     = 0.5f
-                    tvSyncStatus.text = "✅ Device info sent to server successfully!"
+                    tvSyncStatus.text = "Device info sent to server successfully!"
                 } else {
-                    tvSyncStatus.text = "❌ Failed to send: ${response.code()}"
+                    tvSyncStatus.text = "Failed to send: ${response.code()}"
                 }
             } catch (e: Exception) {
-                tvSyncStatus.text = "❌ Error: ${e.message}"
+                tvSyncStatus.text = "Error: ${e.message}"
             }
         }
     }
@@ -339,7 +365,7 @@ class MainActivity : AppCompatActivity() {
     private fun syncAppInventory() {
         lifecycleScope.launch {
             try {
-                tvSyncStatus.text = "📦 Collecting apps..."
+                tvSyncStatus.text = "Collecting apps..."
                 tvTotalApps.text  = "..."
                 tvSystemApps.text = "..."
                 tvUserApps.text   = "..."
@@ -377,12 +403,12 @@ class MainActivity : AppCompatActivity() {
                     .apply()
                 val response = RetrofitClient.instance.sendApps(apps)
                 if (response.isSuccessful) {
-                    tvSyncStatus.text = "✅ App inventory synced!\n\n📦 Total  : $totalApps\n⚙️ System : $systemApps\n👤 User   : $userApps"
+                    tvSyncStatus.text = "App inventory synced!\n\nTotal  : $totalApps\nSystem : $systemApps\nUser   : $userApps"
                 } else {
-                    tvSyncStatus.text = "❌ Failed: ${response.code()}"
+                    tvSyncStatus.text = "Failed: ${response.code()}"
                 }
             } catch (e: Exception) {
-                tvSyncStatus.text = "❌ Error: ${e.message}"
+                tvSyncStatus.text = "Error: ${e.message}"
             }
         }
     }
@@ -393,12 +419,10 @@ class MainActivity : AppCompatActivity() {
             .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
             .build()
 
-        // 1. Immediate one-time sync — cancel any existing immediate sync first
-        //    to prevent two syncs running at the same time (causes DB conflict)
         wm.cancelUniqueWork("mdm_sync_now")
         val immediateSync = androidx.work.OneTimeWorkRequestBuilder<SyncWorker>()
             .setConstraints(constraints)
-            .setInitialDelay(2, java.util.concurrent.TimeUnit.SECONDS) // small delay so cancel takes effect
+            .setInitialDelay(2, java.util.concurrent.TimeUnit.SECONDS)
             .build()
         wm.enqueueUniqueWork(
             "mdm_sync_now",
@@ -406,7 +430,6 @@ class MainActivity : AppCompatActivity() {
             immediateSync
         )
 
-        // 2. Periodic background sync every 15 minutes
         val periodicSync = androidx.work.PeriodicWorkRequestBuilder<SyncWorker>(
             15, java.util.concurrent.TimeUnit.MINUTES
         ).setConstraints(constraints).build()
@@ -423,7 +446,7 @@ class MainActivity : AppCompatActivity() {
             intent.action == "android.app.action.PROFILE_PROVISIONING_COMPLETE") {
             val extras = intent.getBundleExtra("android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE")
             val token  = extras?.getString("enrollment_token") ?: "MDM_TOKEN_2024"
-            tvSyncStatus.text = "🔄 Auto enrolling from QR..."
+            tvSyncStatus.text = "Auto enrolling from QR..."
             enrollDevice(token)
         }
     }
