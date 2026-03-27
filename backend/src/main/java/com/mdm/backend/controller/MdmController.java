@@ -1,5 +1,6 @@
 package com.mdm.backend.controller;
 
+import com.mdm.backend.FCMService;
 import com.mdm.backend.model.*;
 import com.mdm.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ public class MdmController {
     @Autowired private EnrollmentTokenRepository enrollmentTokenRepository;
     @Autowired private DeviceLocationRepository deviceLocationRepository;
     @Autowired private AppRestrictionRepository appRestrictionRepository;
+    @Autowired private FCMService fcmService;
 
     // ── Enroll ──
     @PostMapping("/enroll")
@@ -83,7 +85,6 @@ public class MdmController {
             });
             return ResponseEntity.ok("App inventory saved");
         } catch (DataAccessException e) {
-            // Two syncs fired at the same time — safe to ignore, next sync will succeed
             return ResponseEntity.ok("App inventory sync skipped (concurrent request)");
         }
     }
@@ -98,12 +99,22 @@ public class MdmController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    // ── FCM Token — save token sent by Android app ──
+    @PostMapping("/api/device/fcm-token")
+    public ResponseEntity<?> updateFcmToken(@RequestParam String deviceId,
+                                            @RequestParam String token) {
+        return enrolledDeviceRepository.findByDeviceId(deviceId).map(device -> {
+            device.setFcmToken(token);
+            enrolledDeviceRepository.save(device);
+            return ResponseEntity.ok("FCM token updated");
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     // ── Location endpoints ──
     @PostMapping("/api/device-location")
     public ResponseEntity<?> saveLocation(@RequestBody DeviceLocation location) {
         location.setTimestamp(LocalDateTime.now());
         deviceLocationRepository.save(location);
-        // Also update lastSeen when location is sent
         enrolledDeviceRepository.findByDeviceId(location.getDeviceId()).ifPresent(device -> {
             device.setLastSeen(LocalDateTime.now());
             enrolledDeviceRepository.save(device);
@@ -240,13 +251,11 @@ public class MdmController {
 
     // ── App Restrictions ──────────────────────────────────────────────────
 
-    // GET all blocked apps for an admin
     @GetMapping("/api/restrictions")
     public ResponseEntity<List<AppRestriction>> getRestrictions(@RequestParam Long adminId) {
         return ResponseEntity.ok(appRestrictionRepository.findByAdminId(adminId));
     }
 
-    // GET blocked package names only — called by Android device on every sync
     @GetMapping("/api/restrictions/packages")
     public ResponseEntity<List<String>> getRestrictedPackages(@RequestParam String deviceId) {
         return enrolledDeviceRepository.findByDeviceId(deviceId)
@@ -261,7 +270,7 @@ public class MdmController {
                 .orElse(ResponseEntity.ok(List.of()));
     }
 
-    // POST block an app
+    // POST block an app — saves to DB then instantly pushes to device via FCM
     @PostMapping("/api/restrictions")
     public ResponseEntity<?> blockApp(@RequestBody AppRestriction restriction) {
         if (appRestrictionRepository.existsByAdminIdAndPackageName(
@@ -269,14 +278,34 @@ public class MdmController {
             return ResponseEntity.badRequest().body("App already blocked");
         }
         restriction.setCreatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(appRestrictionRepository.save(restriction));
+        appRestrictionRepository.save(restriction);
+
+        // Push instant command to all devices of this admin via FCM
+        List<EnrolledDevice> devices = enrolledDeviceRepository
+                .findByAdminId(restriction.getAdminId());
+        for (EnrolledDevice device : devices) {
+            if (device.getFcmToken() != null && !device.getFcmToken().isEmpty()) {
+                fcmService.sendEnforceRestrictions(device.getFcmToken());
+            }
+        }
+
+        return ResponseEntity.ok(restriction);
     }
 
-    // DELETE unblock an app
+    // DELETE unblock an app — removes from DB then instantly pushes to device via FCM
     @DeleteMapping("/api/restrictions")
     public ResponseEntity<?> unblockApp(@RequestParam Long adminId,
                                         @RequestParam String packageName) {
         appRestrictionRepository.deleteByAdminIdAndPackageName(adminId, packageName);
+
+        // Push instant command to all devices of this admin via FCM
+        List<EnrolledDevice> devices = enrolledDeviceRepository.findByAdminId(adminId);
+        for (EnrolledDevice device : devices) {
+            if (device.getFcmToken() != null && !device.getFcmToken().isEmpty()) {
+                fcmService.sendEnforceRestrictions(device.getFcmToken());
+            }
+        }
+
         return ResponseEntity.ok("App unblocked");
     }
 }

@@ -10,6 +10,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
+import retrofit2.http.DELETE
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
@@ -32,6 +33,12 @@ interface ApiService {
 
     @GET("/api/restrictions/packages")
     suspend fun getRestrictedPackages(@Query("deviceId") deviceId: String): Response<List<String>>
+
+    @POST("/api/device/fcm-token")
+    suspend fun updateFcmToken(
+        @Query("deviceId") deviceId: String,
+        @Query("token") token: String
+    ): Response<Void>
 }
 
 object RetrofitClient {

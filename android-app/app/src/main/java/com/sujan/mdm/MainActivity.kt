@@ -124,6 +124,7 @@ class MainActivity : AppCompatActivity() {
 
         handleProvisioningIntent()
         scheduleBackgroundSync()
+        sendFcmTokenToBackend()
     }
 
     // ── Status helpers ────────────────────────────────────────────────────
@@ -294,6 +295,21 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) { e.printStackTrace() }
         }
+    }
+
+    private fun sendFcmTokenToBackend() {
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) return@addOnCompleteListener
+                val token = task.result
+                lifecycleScope.launch {
+                    try {
+                        RetrofitClient.instance.updateFcmToken(deviceId, token)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
     }
 
     private fun enrollDevice(token: String) {

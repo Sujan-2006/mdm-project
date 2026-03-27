@@ -34,3 +34,6 @@ build/
 
 # Logs
 *.log
+
+# Firebase secret key — never push this to GitHub
+firebase-adminsdk.json

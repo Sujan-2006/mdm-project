@@ -26,4 +26,7 @@ public class EnrolledDevice {
     // Updated every time the device syncs — used for online/offline status
     @Column(name = "last_seen")
     private LocalDateTime lastSeen;
+
+    @Column(name = "fcm_token")
+    private String fcmToken;
 }
