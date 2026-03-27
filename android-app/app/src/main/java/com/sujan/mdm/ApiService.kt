@@ -37,7 +37,7 @@ interface ApiService {
 object RetrofitClient {
 
     private const val BASE_URL =
-        "https://mdm-project-production.up.railway.app/"
+        "https://mdm-project-5042.onrender.com/"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

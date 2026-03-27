@@ -51,7 +51,7 @@ class AppChangeReceiver : BroadcastReceiver() {
                 if (adminId == -1L) {
                     try {
                         val req = Request.Builder()
-                            .url("https://mdm-project-production.up.railway.app/api/device-admin?deviceId=$deviceId")
+                            .url("https://mdm-project-5042.onrender.com/api/device-admin?deviceId=$deviceId")
                             .get()
                             .build()
                         val resp = client.newCall(req).execute()

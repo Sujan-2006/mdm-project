@@ -139,7 +139,7 @@ class SyncWorker(
                         }
                         val body = json.toString().toRequestBody("application/json".toMediaType())
                         val req  = Request.Builder()
-                            .url("https://mdm-project-production.up.railway.app/api/activity-log")
+                            .url("https://mdm-project-5042.onrender.com/api/activity-log")
                             .post(body).build()
                         client.newCall(req).execute().close()
                     } catch (e: Exception) { e.printStackTrace() }
@@ -160,7 +160,7 @@ class SyncWorker(
                         }
                         val body = json.toString().toRequestBody("application/json".toMediaType())
                         val req  = Request.Builder()
-                            .url("https://mdm-project-production.up.railway.app/api/activity-log")
+                            .url("https://mdm-project-5042.onrender.com/api/activity-log")
                             .post(body).build()
                         client.newCall(req).execute().close()
                     } catch (e: Exception) { e.printStackTrace() }
@@ -177,7 +177,7 @@ class SyncWorker(
             // ── Step 8: Ping backend to update lastSeen ───────────────────
             try {
                 val pingReq = Request.Builder()
-                    .url("https://mdm-project-production.up.railway.app/api/device-ping?deviceId=$deviceId")
+                    .url("https://mdm-project-5042.onrender.com/api/device-ping?deviceId=$deviceId")
                     .post("".toRequestBody(null))
                     .build()
                 OkHttpClient().newCall(pingReq).execute().close()
