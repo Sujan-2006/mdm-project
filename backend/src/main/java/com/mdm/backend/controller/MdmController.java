@@ -250,7 +250,7 @@ public class MdmController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ── App Restrictions (FCM — existing enrolled devices) ───────────────
+    // ── App Restrictions ─────────────────────────────────────────────────
 
     @GetMapping("/api/restrictions")
     public ResponseEntity<List<AppRestriction>> getRestrictions(@RequestParam Long adminId) {
@@ -281,7 +281,6 @@ public class MdmController {
         restriction.setForceInstall(false);
         appRestrictionRepository.save(restriction);
 
-        // FCM push to existing enrolled devices
         List<EnrolledDevice> devices = enrolledDeviceRepository
                 .findByAdminId(restriction.getAdminId());
         for (EnrolledDevice device : devices) {
@@ -290,7 +289,6 @@ public class MdmController {
             }
         }
 
-        // AMAPI policy update
         List<String> blockedPackages = appRestrictionRepository
                 .findByAdminIdAndForceInstall(restriction.getAdminId(), false)
                 .stream().map(AppRestriction::getPackageName).toList();
@@ -307,7 +305,6 @@ public class MdmController {
                                         @RequestParam String packageName) {
         appRestrictionRepository.deleteByAdminIdAndPackageName(adminId, packageName);
 
-        // FCM push
         List<EnrolledDevice> devices = enrolledDeviceRepository.findByAdminId(adminId);
         for (EnrolledDevice device : devices) {
             if (device.getFcmToken() != null && !device.getFcmToken().isEmpty()) {
@@ -315,7 +312,6 @@ public class MdmController {
             }
         }
 
-        // AMAPI policy update
         List<String> blockedPackages = appRestrictionRepository
                 .findByAdminIdAndForceInstall(adminId, false)
                 .stream().map(AppRestriction::getPackageName).toList();
@@ -387,5 +383,24 @@ public class MdmController {
         List<AppRestriction> list = appRestrictionRepository
                 .findByAdminIdAndForceInstall(adminId, true);
         return ResponseEntity.ok(list);
+    }
+
+    // ── AMAPI Enrollment Token ────────────────────────────────────────────
+    @PostMapping("/api/amapi/enrollment-token")
+    public ResponseEntity<?> createAmapiEnrollmentToken(@RequestParam Long adminId) {
+        try {
+            String token = amapiService.createEnrollmentToken();
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to create AMAPI enrollment token");
+            }
+            Map<String, String> result = new HashMap<>();
+            result.put("token", token);
+            result.put("enterpriseId", amapiService.getEnterpriseId());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
     }
 }

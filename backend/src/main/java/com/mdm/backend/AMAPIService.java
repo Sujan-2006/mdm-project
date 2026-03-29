@@ -3,6 +3,7 @@ package com.mdm.backend;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.androidmanagement.v1.AndroidManagement;
+import com.google.api.services.androidmanagement.v1.model.EnrollmentToken;
 import com.google.api.services.androidmanagement.v1.model.Policy;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -82,7 +83,6 @@ public class AMAPIService {
             Policy policy = new Policy();
             List<Map<String, Object>> applications = new ArrayList<>();
 
-            // Blocked apps
             for (String pkg : blockedPackages) {
                 Map<String, Object> app = new HashMap<>();
                 app.put("packageName", pkg);
@@ -90,7 +90,6 @@ public class AMAPIService {
                 applications.add(app);
             }
 
-            // Force installed apps
             for (String pkg : forceInstalledPackages) {
                 Map<String, Object> app = new HashMap<>();
                 app.put("packageName", pkg);
@@ -111,5 +110,33 @@ public class AMAPIService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String createEnrollmentToken() {
+        try {
+            if (androidManagement == null) {
+                System.err.println("AMAPIService: Not initialized!");
+                return null;
+            }
+
+            EnrollmentToken enrollmentToken = new EnrollmentToken();
+            enrollmentToken.setPolicyName(enterpriseId + "/policies/default");
+
+            EnrollmentToken created = androidManagement.enterprises()
+                    .enrollmentTokens()
+                    .create(enterpriseId, enrollmentToken)
+                    .execute();
+
+            System.out.println("AMAPIService: Enrollment token created: "
+                    + created.getValue());
+            return created.getValue();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String getEnterpriseId() {
+        return enterpriseId;
     }
 }
