@@ -19,6 +19,9 @@ public class AppRestriction {
 
     private Long adminId;
     private String packageName;
-    private String appName;       // friendly display name (optional, filled by admin)
+    private String appName;
     private LocalDateTime createdAt;
+
+    @Column(name = "force_install", nullable = false)
+    private boolean forceInstall = false;
 }

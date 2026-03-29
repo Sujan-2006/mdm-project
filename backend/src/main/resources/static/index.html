@@ -277,11 +277,15 @@
         .restr-field{display:flex;flex-direction:column;gap:6px;}
         .restr-block-btn{background:#dc2626;border:none;border-radius:8px;padding:10px 20px;color:white;font-size:13px;font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
         .restr-block-btn:hover{opacity:.88;}
+        .restr-force-btn{background:#7c3aed;border:none;border-radius:8px;padding:10px 20px;color:white;font-size:13px;font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+        .restr-force-btn:hover{opacity:.88;}
         .restr-hint{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid var(--accent);}
+        .restr-hint-green{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid var(--green);}
         .restr-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;}
         .restr-row:hover{background:var(--surface2);}
         .restr-row:last-child{border-bottom:none;}
         .restr-badge{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.2);border-radius:6px;padding:3px 8px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.05em;}
+        .restr-badge-green{background:rgba(16,217,126,.08);color:var(--green);border:1px solid rgba(16,217,126,.2);border-radius:6px;padding:3px 8px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.05em;}
         .restr-name{flex:1;font-size:13px;font-weight:600;color:var(--text);}
         .restr-pkg{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
         .restr-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;}
@@ -366,6 +370,7 @@
             <div class="nav-item" onclick="showPage('devices',this)"><span class="ico">📱</span> Devices</div>
             <div class="nav-item" onclick="showPage('location',this)"><span class="ico">📍</span> Device Location</div>
             <div class="nav-item" onclick="showPage('restrictions',this)"><span class="ico">🚫</span> App Restrictions</div>
+            <div class="nav-item" onclick="showPage('forceinstall',this)"><span class="ico">📲</span> Force Install</div>
             <div class="nav-item" onclick="showPage('tokens',this)"><span class="ico">🔑</span> Tokens</div>
             <div class="nav-item" onclick="showPage('qr',this)"><span class="ico">📷</span> QR Enrollment</div>
         </div>
@@ -393,6 +398,7 @@
         </div>
 
         <div class="content" id="normalContent">
+            <!-- DASHBOARD PAGE -->
             <div class="page active" id="page-dashboard">
                 <div class="stats-row">
                     <div class="stat-card cb"><div class="stat-lbl">Enrolled Devices</div><div class="stat-val" id="totalDevices">—</div><div class="stat-sub">total registered</div></div>
@@ -403,11 +409,13 @@
                 <div id="activityFeed"><div class="st-loading">⟳ Loading activity...</div></div>
             </div>
 
+            <!-- DEVICES PAGE -->
             <div class="page" id="page-devices">
                 <div class="sec-hdr">All Enrolled Devices</div>
                 <div id="allCards"><div class="st-loading">⟳ Loading devices...</div></div>
             </div>
 
+            <!-- TOKENS PAGE -->
             <div class="page" id="page-tokens">
                 <div class="sec-hdr" style="margin-bottom:20px">Enrollment Token Management</div>
                 <div class="token-form-card">
@@ -424,6 +432,7 @@
                 <div id="tokensList"><div class="st-loading">⟳ Loading tokens...</div></div>
             </div>
 
+            <!-- QR PAGE -->
             <div class="page" id="page-qr">
                 <div class="sec-hdr" style="margin-bottom:20px">QR Code Provisioning</div>
                 <div class="qr-wrap">
@@ -485,10 +494,11 @@
                 </div>
             </div>
 
+            <!-- APP RESTRICTIONS PAGE -->
             <div class="page" id="page-restrictions">
-                <div class="sec-hdr" style="margin-bottom:20px">App Restriction Management</div>
+                <div class="sec-hdr" style="margin-bottom:20px">App Restriction Management — via AMAPI Policy</div>
                 <div class="restr-form-card">
-                    <div class="restr-form-title">Block an App</div>
+                    <div class="restr-form-title">🚫 Block an App</div>
                     <div id="restrMsg"></div>
                     <div class="restr-form-row">
                         <div class="restr-field">
@@ -501,10 +511,37 @@
                         </div>
                         <button class="restr-block-btn" onclick="blockApp()">Block App</button>
                     </div>
-                    <div class="restr-hint">Find package names in the app inventory panel on any device card. Blocked apps will be hidden on all enrolled devices within 15 minutes or immediately when DroidShield is opened.</div>
+                    <div class="restr-hint">Blocked apps are hidden on all enrolled devices instantly via AMAPI policy + FCM push. Find package names in the app inventory panel on any device card.</div>
                 </div>
                 <div class="sec-hdr" style="margin-top:8px">Blocked Apps</div>
                 <div id="restrList"><div class="st-loading">⟳ Loading...</div></div>
+            </div>
+
+            <!-- FORCE INSTALL PAGE — NEW AMAPI FEATURE -->
+            <div class="page" id="page-forceinstall">
+                <div class="sec-hdr" style="margin-bottom:20px">Force App Installation — via AMAPI Policy</div>
+                <div class="restr-form-card">
+                    <div class="restr-form-title">📲 Force Install an App</div>
+                    <div id="forceMsg"></div>
+                    <div class="restr-form-row">
+                        <div class="restr-field">
+                            <label class="flbl">App Name <span style="color:var(--muted);font-weight:400">(for display)</span></label>
+                            <input class="finp" type="text" id="forceAppName" placeholder="e.g. Google Chrome">
+                        </div>
+                        <div class="restr-field">
+                            <label class="flbl">Package Name <span style="color:var(--muted);font-weight:400">(required)</span></label>
+                            <input class="finp" type="text" id="forcePkgName" placeholder="e.g. com.android.chrome">
+                        </div>
+                        <button class="restr-force-btn" onclick="forceInstallApp()">📲 Force Install</button>
+                    </div>
+                    <div class="restr-hint-green">
+                        Apps added here will be automatically installed on all enrolled devices via Google's AMAPI policy.
+                        The device must be enrolled under this enterprise for force install to work.
+                        Use the exact Play Store package name.
+                    </div>
+                </div>
+                <div class="sec-hdr" style="margin-top:8px">Force Installed Apps</div>
+                <div id="forceList"><div class="st-loading">⟳ Loading...</div></div>
             </div>
         </div>
 
@@ -553,7 +590,6 @@
     </div>
     <div class="ap-body" id="apBody"><div class="ap-state">⟳ Loading apps...</div></div>
 </div>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -658,7 +694,7 @@
     function showPage(name, el) {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
-        const t = { dashboard:'Dashboard', devices:'All Devices', location:'Device Location', restrictions:'App Restrictions', tokens:'Token Management', qr:'QR Enrollment' };
+        const t = { dashboard:'Dashboard', devices:'All Devices', location:'Device Location', restrictions:'App Restrictions', forceinstall:'Force Install Apps', tokens:'Token Management', qr:'QR Enrollment' };
         document.getElementById('pageTitle').textContent = t[name];
         if (name === 'location') {
             document.getElementById('normalContent').style.display = 'none';
@@ -672,6 +708,7 @@
             if (name === 'devices')      renderCards('allCards');
             if (name === 'tokens')       loadTokens();
             if (name === 'restrictions') loadRestrictions();
+            if (name === 'forceinstall') loadForceInstall();
         }
     }
 
@@ -728,11 +765,6 @@
         return Math.floor(diff / 86400) + 'd ago';
     }
 
-    /* ═══ ONLINE/OFFLINE STATUS ═══
-       Online  = lastSeen within 30 minutes
-       Offline = lastSeen more than 30 minutes ago
-       Never   = lastSeen is null (old devices before this feature)
-    */
     function getStatusBadge(lastSeen) {
         if (!lastSeen) return `<span class="badge-unknown">⚪ Never Synced</span>`;
         const utcStr  = lastSeen.endsWith('Z') ? lastSeen : lastSeen + 'Z';
@@ -749,7 +781,6 @@
         return `🕐 Last seen: ${timeAgo(lastSeen)}`;
     }
 
-    /* DEVICE CARDS */
     async function renderCards(cid) {
         const c = document.getElementById(cid);
         c.innerHTML = '<div class="st-loading">⟳ Loading devices...</div>';
@@ -776,7 +807,7 @@
     }
 
     async function deleteDevice(deviceId) {
-        if (!confirm(`⚠️ Delete this device?\n\nThis will permanently remove:\n• Enrollment record\n• Device info\n• App inventory\n• Activity logs\n• Location data\n\nThis cannot be undone!`)) return;
+        if (!confirm(`⚠️ Delete this device?\n\nThis cannot be undone!`)) return;
         try {
             const res = await fetch(`${API}/api/devices/${deviceId}`, { method: 'DELETE' });
             if (res.ok) { renderCards('allCards'); loadStats(); }
@@ -859,24 +890,14 @@
 
     /* LOCATION MAP */
     function initMap(callback) {
-        // Always destroy old map instance so Leaflet re-measures the div freshly
-        if (leafletMap) {
-            leafletMap.remove();
-            leafletMap = null;
-            mapMarkers = [];
-        }
-        // Double rAF ensures the flex layout has fully painted before Leaflet reads the div size
+        if (leafletMap) { leafletMap.remove(); leafletMap = null; mapMarkers = []; }
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 const mapEl = document.getElementById('map');
-                if (!mapEl || mapEl.offsetHeight < 10) {
-                    // Fallback: force an explicit height in case flex hasn't resolved yet
-                    mapEl.style.height = '400px';
-                }
+                if (!mapEl || mapEl.offsetHeight < 10) { mapEl.style.height = '400px'; }
                 leafletMap = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
+                    attribution: '© OpenStreetMap contributors', maxZoom: 19
                 }).addTo(leafletMap);
                 leafletMap.invalidateSize();
                 if (callback) callback();
@@ -887,21 +908,17 @@
     async function loadLocationMap() {
         const listEl = document.getElementById('locationDeviceList');
         listEl.innerHTML = '<div class="st-loading" style="padding:12px 0">⟳ Loading...</div>';
-
-        // Fetch data first, then init map with data ready
         let locations = [];
         try {
             const res = await fetch(`${API}/api/device-locations?adminId=${adminId}`);
             locations = await res.json();
         } catch(e) {
             listEl.innerHTML = `<div class="st-err">❌ Failed to load: ${e.message}</div>`;
-            initMap(null);
-            return;
+            initMap(null); return;
         }
-
         initMap(() => {
             if (!locations.length) {
-                listEl.innerHTML = `<div style="padding:8px 0;font-size:12px;font-family:monospace;color:var(--muted)">📍 No location data yet — open the MDM app on your phone and wait up to 15 mins for WorkManager to sync</div>`;
+                listEl.innerHTML = `<div style="padding:8px 0;font-size:12px;font-family:monospace;color:var(--muted)">📍 No location data yet</div>`;
                 return;
             }
             const bounds = [];
@@ -920,10 +937,7 @@
                 mapMarkers.push(marker);
                 bounds.push([loc.latitude, loc.longitude]);
             });
-            if (bounds.length > 0) {
-                leafletMap.invalidateSize();
-                leafletMap.fitBounds(bounds, { padding: [40, 40] });
-            }
+            if (bounds.length > 0) { leafletMap.invalidateSize(); leafletMap.fitBounds(bounds, { padding: [40, 40] }); }
         });
     }
 
@@ -984,7 +998,7 @@
         catch(e) { alert('Failed to toggle token'); }
     }
     async function deleteToken(id) {
-        if (!confirm('Delete this token? This cannot be undone!')) return;
+        if (!confirm('Delete this token?')) return;
         try { await fetch(`${API}/api/tokens/${id}`, {method:'DELETE'}); loadTokens(); }
         catch(e) { alert('Failed to delete token'); }
     }
@@ -996,11 +1010,13 @@
         try {
             const res  = await fetch(`${API}/api/restrictions?adminId=${adminId}`);
             const list = await res.json();
-            if (!list.length) {
+            // Only show blocked (not force install)
+            const blocked = list.filter(r => !r.forceInstall);
+            if (!blocked.length) {
                 listEl.innerHTML = '<div class="restr-table"><div class="restr-empty">✅ No apps blocked — all apps are allowed on enrolled devices</div></div>';
                 return;
             }
-            listEl.innerHTML = `<div class="restr-table">${list.map(r => `
+            listEl.innerHTML = `<div class="restr-table">${blocked.map(r => `
                 <div class="restr-row">
                     <span class="restr-badge">BLOCKED</span>
                     <div>
@@ -1020,8 +1036,8 @@
         const appName = document.getElementById('restrAppName').value.trim();
         const msgEl   = document.getElementById('restrMsg');
         if (!pkg) { msgEl.innerHTML = '<div class="st-err">❌ Package name is required</div>'; return; }
-        if (!pkg.includes('.')) { msgEl.innerHTML = '<div class="st-err">❌ Invalid package name — must contain a dot (e.g. com.instagram.android)</div>'; return; }
-        msgEl.innerHTML = '<div class="st-loading">⟳ Blocking...</div>';
+        if (!pkg.includes('.')) { msgEl.innerHTML = '<div class="st-err">❌ Invalid package name — must contain a dot</div>'; return; }
+        msgEl.innerHTML = '<div class="st-loading">⟳ Blocking via AMAPI...</div>';
         try {
             const res = await fetch(`${API}/api/restrictions`, {
                 method: 'POST',
@@ -1029,13 +1045,12 @@
                 body: JSON.stringify({ adminId, packageName: pkg, appName: appName || pkg })
             });
             if (res.ok) {
-                msgEl.innerHTML = '<div class="st-ok">✅ App blocked! Devices will hide it on next sync.</div>';
+                msgEl.innerHTML = '<div class="st-ok">✅ App blocked via AMAPI policy! Applied instantly on enrolled devices.</div>';
                 document.getElementById('restrPkgName').value = '';
                 document.getElementById('restrAppName').value = '';
                 loadRestrictions();
             } else {
-                const txt = await res.text();
-                msgEl.innerHTML = `<div class="st-err">❌ ${txt}</div>`;
+                msgEl.innerHTML = `<div class="st-err">❌ ${await res.text()}</div>`;
             }
         } catch(e) {
             msgEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
@@ -1043,13 +1058,69 @@
     }
 
     async function unblockApp(packageName) {
-        if (!confirm(`Unblock ${packageName}?\n\nThe app will become visible again on all devices on next sync.`)) return;
+        if (!confirm(`Unblock ${packageName}?`)) return;
         try {
             await fetch(`${API}/api/restrictions?adminId=${adminId}&packageName=${encodeURIComponent(packageName)}`, { method:'DELETE' });
             loadRestrictions();
+        } catch(e) { alert('Failed to unblock: ' + e.message); }
+    }
+
+    /* ═══ FORCE INSTALL — NEW AMAPI FEATURE ═══ */
+    async function loadForceInstall() {
+        const listEl = document.getElementById('forceList');
+        listEl.innerHTML = '<div class="st-loading">⟳ Loading...</div>';
+        try {
+            const res  = await fetch(`${API}/api/amapi/force-install?adminId=${adminId}`);
+            const list = await res.json();
+            if (!list.length) {
+                listEl.innerHTML = '<div class="restr-table"><div class="restr-empty">📲 No apps force installed yet</div></div>';
+                return;
+            }
+            listEl.innerHTML = `<div class="restr-table">${list.map(r => `
+                <div class="restr-row">
+                    <span class="restr-badge-green">FORCE INSTALL</span>
+                    <div>
+                        <div class="restr-name">${r.appName || r.packageName}</div>
+                        <div class="restr-pkg">${r.packageName}</div>
+                    </div>
+                    <div class="restr-time">${timeAgo(r.createdAt)}</div>
+                    <button class="restr-unblock-btn" onclick="removeForceInstall('${r.packageName}')">✕ Remove</button>
+                </div>`).join('')}</div>`;
         } catch(e) {
-            alert('Failed to unblock: ' + e.message);
+            listEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
         }
+    }
+
+    async function forceInstallApp() {
+        const pkg     = document.getElementById('forcePkgName').value.trim();
+        const appName = document.getElementById('forceAppName').value.trim();
+        const msgEl   = document.getElementById('forceMsg');
+        if (!pkg) { msgEl.innerHTML = '<div class="st-err">❌ Package name is required</div>'; return; }
+        if (!pkg.includes('.')) { msgEl.innerHTML = '<div class="st-err">❌ Invalid package name — must contain a dot</div>'; return; }
+        msgEl.innerHTML = '<div class="st-loading">⟳ Sending force install via AMAPI...</div>';
+        try {
+            const res = await fetch(`${API}/api/amapi/force-install?adminId=${adminId}&packageName=${encodeURIComponent(pkg)}`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                msgEl.innerHTML = '<div class="st-ok">✅ Force install sent via AMAPI! App will install automatically on enrolled devices.</div>';
+                document.getElementById('forcePkgName').value = '';
+                document.getElementById('forceAppName').value = '';
+                loadForceInstall();
+            } else {
+                msgEl.innerHTML = `<div class="st-err">❌ ${await res.text()}</div>`;
+            }
+        } catch(e) {
+            msgEl.innerHTML = `<div class="st-err">❌ ${e.message}</div>`;
+        }
+    }
+
+    async function removeForceInstall(packageName) {
+        if (!confirm(`Remove force install for ${packageName}?`)) return;
+        try {
+            await fetch(`${API}/api/amapi/force-install?adminId=${adminId}&packageName=${encodeURIComponent(packageName)}`, { method:'DELETE' });
+            loadForceInstall();
+        } catch(e) { alert('Failed: ' + e.message); }
     }
 
     function closeOv(id) { document.getElementById(id).classList.remove('on'); }
@@ -1093,7 +1164,5 @@
         });
     }
 </script>
-</body>
-</html>
 </body>
 </html>

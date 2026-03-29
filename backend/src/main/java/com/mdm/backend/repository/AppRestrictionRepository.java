@@ -9,6 +9,7 @@ import java.util.Optional;
 @Repository
 public interface AppRestrictionRepository extends JpaRepository<AppRestriction, Long> {
     List<AppRestriction> findByAdminId(Long adminId);
+    List<AppRestriction> findByAdminIdAndForceInstall(Long adminId, boolean forceInstall);
     Optional<AppRestriction> findByAdminIdAndPackageName(Long adminId, String packageName);
     boolean existsByAdminIdAndPackageName(Long adminId, String packageName);
     @org.springframework.transaction.annotation.Transactional

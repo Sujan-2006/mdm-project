@@ -1,5 +1,6 @@
 package com.mdm.backend.controller;
 
+import com.mdm.backend.AMAPIService;
 import com.mdm.backend.FCMService;
 import com.mdm.backend.model.*;
 import com.mdm.backend.repository.*;
@@ -30,6 +31,7 @@ public class MdmController {
     @Autowired private DeviceLocationRepository deviceLocationRepository;
     @Autowired private AppRestrictionRepository appRestrictionRepository;
     @Autowired private FCMService fcmService;
+    @Autowired private AMAPIService amapiService;
 
     // ── Enroll ──
     @PostMapping("/enroll")
@@ -89,7 +91,7 @@ public class MdmController {
         }
     }
 
-    // ── Ping endpoint — updates lastSeen timestamp ──
+    // ── Ping ──
     @PostMapping("/api/device-ping")
     public ResponseEntity<?> devicePing(@RequestParam String deviceId) {
         return enrolledDeviceRepository.findByDeviceId(deviceId).map(device -> {
@@ -99,7 +101,7 @@ public class MdmController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // ── FCM Token — save token sent by Android app ──
+    // ── FCM Token ──
     @PostMapping("/api/device/fcm-token")
     public ResponseEntity<?> updateFcmToken(@RequestParam String deviceId,
                                             @RequestParam String token) {
@@ -110,7 +112,7 @@ public class MdmController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // ── Location endpoints ──
+    // ── Location ──
     @PostMapping("/api/device-location")
     public ResponseEntity<?> saveLocation(@RequestBody DeviceLocation location) {
         location.setTimestamp(LocalDateTime.now());
@@ -134,7 +136,7 @@ public class MdmController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ── GET endpoints ──
+    // ── Devices ──
     @GetMapping("/api/devices")
     public ResponseEntity<List<EnrolledDevice>> getAllDevices(@RequestParam Long adminId) {
         return ResponseEntity.ok(enrolledDeviceRepository.findByAdminId(adminId));
@@ -156,7 +158,6 @@ public class MdmController {
         return ResponseEntity.ok(appInventoryRepository.findByDeviceId(deviceId));
     }
 
-    // ── DELETE device — wipes ALL data ──
     @DeleteMapping("/api/devices/{deviceId}")
     public ResponseEntity<?> deleteDevice(@PathVariable String deviceId) {
         try {
@@ -188,7 +189,7 @@ public class MdmController {
         return ResponseEntity.ok(stats);
     }
 
-    // ── Token management ──
+    // ── Tokens ──
     @GetMapping("/api/tokens")
     public ResponseEntity<List<EnrollmentToken>> getAllTokens(@RequestParam Long adminId) {
         return ResponseEntity.ok(enrollmentTokenRepository.findByAdminId(adminId));
@@ -249,7 +250,7 @@ public class MdmController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ── App Restrictions ──────────────────────────────────────────────────
+    // ── App Restrictions (FCM — existing enrolled devices) ───────────────
 
     @GetMapping("/api/restrictions")
     public ResponseEntity<List<AppRestriction>> getRestrictions(@RequestParam Long adminId) {
@@ -261,7 +262,7 @@ public class MdmController {
         return enrolledDeviceRepository.findByDeviceId(deviceId)
                 .map(device -> {
                     List<String> packages = appRestrictionRepository
-                            .findByAdminId(device.getAdminId())
+                            .findByAdminIdAndForceInstall(device.getAdminId(), false)
                             .stream()
                             .map(AppRestriction::getPackageName)
                             .toList();
@@ -270,7 +271,6 @@ public class MdmController {
                 .orElse(ResponseEntity.ok(List.of()));
     }
 
-    // POST block an app — saves to DB then instantly pushes to device via FCM
     @PostMapping("/api/restrictions")
     public ResponseEntity<?> blockApp(@RequestBody AppRestriction restriction) {
         if (appRestrictionRepository.existsByAdminIdAndPackageName(
@@ -278,9 +278,10 @@ public class MdmController {
             return ResponseEntity.badRequest().body("App already blocked");
         }
         restriction.setCreatedAt(LocalDateTime.now());
+        restriction.setForceInstall(false);
         appRestrictionRepository.save(restriction);
 
-        // Push instant command to all devices of this admin via FCM
+        // FCM push to existing enrolled devices
         List<EnrolledDevice> devices = enrolledDeviceRepository
                 .findByAdminId(restriction.getAdminId());
         for (EnrolledDevice device : devices) {
@@ -289,16 +290,24 @@ public class MdmController {
             }
         }
 
+        // AMAPI policy update
+        List<String> blockedPackages = appRestrictionRepository
+                .findByAdminIdAndForceInstall(restriction.getAdminId(), false)
+                .stream().map(AppRestriction::getPackageName).toList();
+        List<String> forceInstallPackages = appRestrictionRepository
+                .findByAdminIdAndForceInstall(restriction.getAdminId(), true)
+                .stream().map(AppRestriction::getPackageName).toList();
+        amapiService.applyPolicy(blockedPackages, forceInstallPackages);
+
         return ResponseEntity.ok(restriction);
     }
 
-    // DELETE unblock an app — removes from DB then instantly pushes to device via FCM
     @DeleteMapping("/api/restrictions")
     public ResponseEntity<?> unblockApp(@RequestParam Long adminId,
                                         @RequestParam String packageName) {
         appRestrictionRepository.deleteByAdminIdAndPackageName(adminId, packageName);
 
-        // Push instant command to all devices of this admin via FCM
+        // FCM push
         List<EnrolledDevice> devices = enrolledDeviceRepository.findByAdminId(adminId);
         for (EnrolledDevice device : devices) {
             if (device.getFcmToken() != null && !device.getFcmToken().isEmpty()) {
@@ -306,6 +315,77 @@ public class MdmController {
             }
         }
 
+        // AMAPI policy update
+        List<String> blockedPackages = appRestrictionRepository
+                .findByAdminIdAndForceInstall(adminId, false)
+                .stream().map(AppRestriction::getPackageName).toList();
+        List<String> forceInstallPackages = appRestrictionRepository
+                .findByAdminIdAndForceInstall(adminId, true)
+                .stream().map(AppRestriction::getPackageName).toList();
+        amapiService.applyPolicy(blockedPackages, forceInstallPackages);
+
         return ResponseEntity.ok("App unblocked");
+    }
+
+    // ── AMAPI Force Install ───────────────────────────────────────────────
+
+    @PostMapping("/api/amapi/force-install")
+    public ResponseEntity<?> forceInstallApp(@RequestParam Long adminId,
+                                             @RequestParam String packageName) {
+        try {
+            if (appRestrictionRepository.existsByAdminIdAndPackageName(adminId, packageName)) {
+                return ResponseEntity.badRequest().body("Package already exists in policy");
+            }
+
+            AppRestriction forceInstall = new AppRestriction();
+            forceInstall.setAdminId(adminId);
+            forceInstall.setPackageName(packageName);
+            forceInstall.setCreatedAt(LocalDateTime.now());
+            forceInstall.setForceInstall(true);
+            appRestrictionRepository.save(forceInstall);
+
+            List<String> blockedPackages = appRestrictionRepository
+                    .findByAdminIdAndForceInstall(adminId, false)
+                    .stream().map(AppRestriction::getPackageName).toList();
+            List<String> forceInstallPackages = appRestrictionRepository
+                    .findByAdminIdAndForceInstall(adminId, true)
+                    .stream().map(AppRestriction::getPackageName).toList();
+
+            amapiService.applyPolicy(blockedPackages, forceInstallPackages);
+
+            return ResponseEntity.ok("App force install initiated via AMAPI");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/api/amapi/force-install")
+    public ResponseEntity<?> removeForceInstall(@RequestParam Long adminId,
+                                                @RequestParam String packageName) {
+        try {
+            appRestrictionRepository.deleteByAdminIdAndPackageName(adminId, packageName);
+
+            List<String> blockedPackages = appRestrictionRepository
+                    .findByAdminIdAndForceInstall(adminId, false)
+                    .stream().map(AppRestriction::getPackageName).toList();
+            List<String> forceInstallPackages = appRestrictionRepository
+                    .findByAdminIdAndForceInstall(adminId, true)
+                    .stream().map(AppRestriction::getPackageName).toList();
+
+            amapiService.applyPolicy(blockedPackages, forceInstallPackages);
+
+            return ResponseEntity.ok("Force install removed");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/amapi/force-install")
+    public ResponseEntity<?> getForceInstalledApps(@RequestParam Long adminId) {
+        List<AppRestriction> list = appRestrictionRepository
+                .findByAdminIdAndForceInstall(adminId, true);
+        return ResponseEntity.ok(list);
     }
 }
