@@ -2,6 +2,8 @@ package com.mdm.backend;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.androidmanagement.v1.AndroidManagement;
 import com.google.api.services.androidmanagement.v1.model.EnrollmentToken;
 import com.google.api.services.androidmanagement.v1.model.Policy;
@@ -14,6 +16,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -59,10 +62,21 @@ public class AMAPIService {
                     .createScoped(Collections.singletonList(
                             "https://www.googleapis.com/auth/androidmanagement"));
 
+            // ── Wrap credentials with increased timeout ──
+            HttpRequestInitializer requestInitializer =
+                    new HttpCredentialsAdapter(credentials) {
+                        @Override
+                        public void initialize(HttpRequest request) throws IOException {
+                            super.initialize(request);
+                            request.setConnectTimeout(120000); // 2 minutes
+                            request.setReadTimeout(120000);    // 2 minutes
+                        }
+                    };
+
             androidManagement = new AndroidManagement.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
                     GsonFactory.getDefaultInstance(),
-                    new HttpCredentialsAdapter(credentials))
+                    requestInitializer)
                     .setApplicationName("MDM Project")
                     .build();
 
@@ -121,6 +135,7 @@ public class AMAPIService {
 
             EnrollmentToken enrollmentToken = new EnrollmentToken();
             enrollmentToken.setPolicyName(enterpriseId + "/policies/default");
+            enrollmentToken.setDuration("86400s"); // 24 hours
 
             EnrollmentToken created = androidManagement.enterprises()
                     .enrollmentTokens()
